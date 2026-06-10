@@ -12,7 +12,6 @@ root.title("Password Manager")
 
 # setting the windows size
 root.geometry("600x400")
-root.resizable(False, False)
 
 # gets the userprofile name, ex: cdove
 # sets the file_path to the users desktop, prints path in terminal
