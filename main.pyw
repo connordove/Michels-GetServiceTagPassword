@@ -148,6 +148,24 @@ def delete_history():
         print("Chose not to delete history.")
         return
 
+def delete_selected():
+    print("Deleting selected: " + str(history_box.curselection()) + "  ... ")
+    try:
+        selected_index = history_box.curselection()[0]
+
+        with open(file_path, "r", encoding="utf-8") as fr:
+            lines = fr.readlines()
+
+            with open(file_path, "w", encoding="utf-8") as fw:
+                for i, line in enumerate(lines):
+                    if i != selected_index:
+                        fw.write(line)
+        load_history()
+        print("Finished deleting selected")
+
+    except Exception as e:
+        print("Error deleting line: ", e)
+
 
 # creating a label for
 # name using widget Label
@@ -169,6 +187,8 @@ sub_btn = tk.Button(root, text='Submit', command=submit, width=10)
 
 delete_btn = tk.Button(root, text='Delete History', command=delete_history)
 
+delete_selected_btn = tk.Button(root, text='Delete Selected', command=delete_selected)
+
 # creating a listbox to display service tag and password history
 history_box = tk.Listbox(root, height=10, width=43, font=('calibre', 14, 'bold'), fg='black')
 
@@ -182,11 +202,11 @@ history_box.config(yscrollcommand=scrollbar.set)
 service_tag_label.grid(row=0, column=0)
 service_tag_entry.grid(row=0, column=1, sticky='w')
 sub_btn.grid(row=2, column=1, sticky='w')
-delete_btn.grid(row=2, column=2, sticky='w')
+delete_selected_btn.grid(row=2, column=2, sticky='ns')
+delete_btn.grid(row=2, column=3, sticky='w')
 password_label.grid(row=4, column=0)
 history_box.grid(row=5, column=0, columnspan=3)
 scrollbar.grid(row=5, column=3, sticky='ns')
-
 
 img_file = Image.open("Powercat.png")
 img_file = img_file.resize((180, 150))
