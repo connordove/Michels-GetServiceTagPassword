@@ -43,10 +43,26 @@ def submit():
         password_display.set("Password not found.")
 
     with open(r"C:\Users\cdove\OneDrive - Michels Corporation\Documents\Scripts\LAPSHistory.txt", "a", encoding="utf-8") as f:
-        f.write(f"\n{st}, {st_password}")
+        f.write(f"{st}, {st_password}\n")
+
+    load_history()
 
     service_tag.set("")
 
+def load_history():
+    try:
+        with open(r"C:\Users\cdove\OneDrive - Michels Corporation\Documents\Scripts\LAPSHistory.txt", "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        recent = lines[-10:]
+
+        history_box.delete(0, tk.END)
+
+        for line in recent:
+            history_box.insert(tk.END, line.strip())
+
+    except FileNotFoundError:
+        history_box.insert(tk.END, "No history file found.")
 
 # creating a label for
 # name using widget Label
@@ -63,6 +79,14 @@ password_label.grid(row=3, column=1)
 # Button that will call the submit function
 sub_btn = tk.Button(root, text='Submit', command=submit)
 
+history_box = tk.Listbox(root, height=10, width=50)
+history_box.grid(row=4, column=0, columnspan=2)
+
+scrollbar = tk.Scrollbar(root, command=history_box.yview)
+history_box.config(yscrollcommand=scrollbar.set)
+
+scrollbar.grid(row=4, column=2, sticky='ns')
+
 # placing the label and entry in
 # the required position using grid
 # method
@@ -70,6 +94,7 @@ service_tag_label.grid(row=0, column=0)
 service_tag_entry.grid(row=0, column=1)
 sub_btn.grid(row=2, column=1)
 
+load_history()
 # performing an infinite loop
 # for the window to display
 root.mainloop()
