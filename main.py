@@ -11,7 +11,7 @@ root = tk.Tk()
 root.title("Password Manager")
 
 # setting the windows size
-root.geometry("600x400")
+root.geometry("550x350")
 
 # gets the userprofile name, ex: cdove
 # sets the file_path to the users desktop, prints path in terminal
@@ -135,7 +135,7 @@ def delete_history():
 
 # creating a label for
 # name using widget Label
-service_tag_label = tk.Label(root, text='Service Number', font=('calibre', 10, 'bold'))
+service_tag_label = tk.Label(root, text='Service Number', font=('calibre', 13, 'bold'))
 
 # creating an entry for input
 # name using widget Entry
@@ -149,12 +149,12 @@ password_label = tk.Label(root, textvariable=password_display, font=('calibre', 
 
 # creating a button using the widget
 # Button that will call the submit function
-sub_btn = tk.Button(root, text='Submit', command=submit)
+sub_btn = tk.Button(root, text='Submit', command=submit, width=10)
 
 delete_btn = tk.Button(root, text='Delete History', command=delete_history)
 
 # creating a listbox to display service tag and password history
-history_box = tk.Listbox(root, height=10, width=50, font=('calibre', 10, 'bold'))
+history_box = tk.Listbox(root, height=10, width=30, font=('calibre', 14, 'bold'), fg='black')
 
 # creating a scroll bar to view large amounts of st and password history
 scrollbar = tk.Scrollbar(root, command=history_box.yview)
