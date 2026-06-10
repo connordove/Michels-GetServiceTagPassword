@@ -12,7 +12,8 @@ root.geometry("600x400")
 # gets the userprofile name, ex: cdove
 os.environ["USERPROFILE"]
 # sets the file_path to the users desktop
-file_path = os.path.join(os.environ["USERPROFILE"], "Desktop")
+desktop = os.path.join(os.environ["USERPROFILE"], "OneDrive - Michels Corporation", "Desktop")
+file_path = os.path.join(desktop, "LAPSHistory.txt")
 
 # declaring string variable
 # for storing service tag and password
@@ -49,7 +50,8 @@ def submit():
         print("Password not found.")
         password_display.set("Password not found.")
     try:
-        with open(join(file_path, "LAPSHistory.txt"), "a", encoding="utf-8") as f:
+        print(file_path)
+        with open(file_path, "a", encoding="utf-8") as f:
             f.write(f"{st}, {st_password}\n")
     except:
         print('File not found.')
@@ -60,7 +62,8 @@ def submit():
 
 def load_history():
     try:
-        with open(join(file_path, "LAPSHistory.txt"), "r", encoding="utf-8") as f:
+        print(file_path)
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         recent = lines[-10:]
