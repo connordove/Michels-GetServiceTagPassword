@@ -11,7 +11,7 @@ root = tk.Tk()
 root.title("Password Manager")
 
 # setting the windows size
-root.geometry("550x350")
+root.geometry("650x350")
 
 today = date.today()
 
@@ -51,21 +51,21 @@ def run_powershell(st):
 
     password_match = re.search(r"Password\s*:\s*(\S+)", output)
     expiration_match = re.search(r"ExpirationTimestamp\s*:\s*(\S+)", output)
-
-    expired_s = expiration_match.group(1).split('/')
-    expired_s = date(int(expired_s[2]), int(expired_s[0]), int(expired_s[1]))
-    expired = (expired_s < today_format)
-    print("Today " + str(today_format))
-    print("Expired " + str(expired_s))
-    print(expired)
+    if expiration_match:
+        expired_s = expiration_match.group(1).split('/')
+        expired_s = date(int(expired_s[2]), int(expired_s[0]), int(expired_s[1]))
+        expired = (expired_s < today_format)
+        print("Today " + str(today_format))
+        print("Expired " + str(expired_s))
+        print(expired)
 
     if password_match:
         pwd = password_match.group(1)
+        if expired:
+            pwd = password_match.group(1) + f"  |{expired_s}|"
     else:
         pwd = "ERROR"
 
-    if expired:
-        pwd = password_match.group(1) + "  |EXPIRED|"
 
     # Update GUI safely
     root.after(0, lambda: password_display.set("SN, Password"))
@@ -86,7 +86,7 @@ def run_powershell(st):
 # print them on the screen
 # save the name and password to file
 def submit(event=None):
-    st = service_tag.get()
+    st = service_tag.get().upper()
 
     if st == "":
         print("Service Number not found.")
@@ -169,7 +169,7 @@ sub_btn = tk.Button(root, text='Submit', command=submit, width=10)
 delete_btn = tk.Button(root, text='Delete History', command=delete_history)
 
 # creating a listbox to display service tag and password history
-history_box = tk.Listbox(root, height=10, width=35, font=('calibre', 14, 'bold'), fg='black')
+history_box = tk.Listbox(root, height=10, width=43, font=('calibre', 14, 'bold'), fg='black')
 
 # creating a scroll bar to view large amounts of st and password history
 scrollbar = tk.Scrollbar(root, command=history_box.yview)
