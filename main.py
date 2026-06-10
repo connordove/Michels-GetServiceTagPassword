@@ -22,12 +22,12 @@ def submit():
     print("The service tag is : " + st)
 
     result = subprocess.run(
-        ["powershell",
-         "-Command",
-         f"Get-LapsADPassword -Identity {st} - asplaintext"],
-        capture_output=True,
-        text=True
-    )
+		["powershell", 
+		"-Command", 
+		f"Get-LapsADPassword -Identity {st} -asplaintext"],
+		capture_output=True,
+		text=True
+     ) 
 
     output = result.stdout
     match = re.search(r"Password\s*:\s*(\S+)", output)
