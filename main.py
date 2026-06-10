@@ -2,6 +2,8 @@ import os
 import re
 import subprocess
 import threading
+import ctypes
+from ctypes import wintypes
 import tkinter as tk
 
 root = tk.Tk()
@@ -23,6 +25,10 @@ password_display = tk.StringVar()
 # sets password_display label to display following text
 password_display.set("Password will appear here")
 
+# defining a function that will
+# run powershell command
+# sort for password from output
+# updates GUI and trys writing to a file
 def run_powershell(st):
     result = subprocess.run(
         ["powershell",
@@ -99,6 +105,24 @@ def load_history():
     except FileNotFoundError:
         history_box.insert(tk.END, "No history file found.")
 
+def delete_history():
+    history_box.delete(0, tk.END)
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        # Force Windows Explorer refresh
+        HWND_BROADCAST = 0xFFFF
+        WM_COMMAND = 0x0111
+        REFRESH = 41504
+
+        ctypes.windll.user32.PostMessageW(
+            HWND_BROADCAST, WM_COMMAND, REFRESH, 0
+        )
+        
+        print("File deleted and desktop refreshed successfully.")
+    else:
+        print("No history file found.")
+
+
 # creating a label for
 # name using widget Label
 service_tag_label = tk.Label(root, text='Service Number', font=('calibre', 10, 'bold'))
@@ -112,20 +136,19 @@ service_tag_entry.bind("<Return>", submit)
 
 # creating a label for password
 password_label = tk.Label(root, textvariable=password_display, font=('calibre', 10, 'bold'))
-password_label.grid(row=4, column=0)
 
 # creating a button using the widget
 # Button that will call the submit function
 sub_btn = tk.Button(root, text='Submit', command=submit)
 
+delete_btn = tk.Button(root, text='Delete History', command=delete_history)
+
 # creating a listbox to display service tag and password history
 history_box = tk.Listbox(root, height=10, width=50, font=('calibre', 10, 'bold'))
-history_box.grid(row=5, column=0, columnspan=2)
 
 # creating a scroll bar to view large amounts of st and password history
 scrollbar = tk.Scrollbar(root, command=history_box.yview)
 history_box.config(yscrollcommand=scrollbar.set)
-scrollbar.grid(row=5, column=2, sticky='ns')
 
 # placing the label and entry in
 # the required position using grid
@@ -133,6 +156,11 @@ scrollbar.grid(row=5, column=2, sticky='ns')
 service_tag_label.grid(row=0, column=0)
 service_tag_entry.grid(row=0, column=1)
 sub_btn.grid(row=2, column=1)
+delete_btn.grid(row=2, column=2)
+password_label.grid(row=4, column=0)
+history_box.grid(row=5, column=0, columnspan=2)
+scrollbar.grid(row=5, column=2, sticky='ns')
+
 
 # loads the history
 load_history()
