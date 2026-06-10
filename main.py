@@ -1,16 +1,65 @@
-# This is a sample Python script.
+import tkinter as tk
+import subprocess
+import re
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+root = tk.Tk()
+
+# setting the windows size
+root.geometry("600x400")
+
+# declaring string variable
+# for storing service tag and password
+service_tag = tk.StringVar()
+st_password = tk.StringVar()
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+# defining a function that will
+# get the name and password and
+# print them on the screen
+def submit():
+    st = service_tag.get()
+
+    print("The service tag is : " + st)
+
+    result = subprocess.run(["powershell",
+                             "-Command",
+                             f"Get-LapsADPassword -Identity {st} - asplaintext"],
+                            capture_output=True,
+                            text=True)
+
+    output = result.stdout
+    match = re.search(r"Password\s*:\s*(\S+)", output)
+    st_password = "ERROR"
+
+    if match:
+        st_password = match.group(1)
+        print("The password is : " + st_password)
+    else:
+        print("Password not found.")
+
+    service_tag.set("")
+    st_password.set("")
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+# creating a label for
+# name using widget Label
+service_tag_label = tk.Label(root, text='Service Tag', font=('calibre', 10, 'bold'))
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+# creating a entry for input
+# name using widget Entry
+service_tag_entry = tk.Entry(root, textvariable=service_tag, font=('calibre', 10, 'normal'))
+
+# creating a button using the widget
+# Button that will call the submit function
+sub_btn = tk.Button(root, text='Submit', command=submit)
+
+# placing the label and entry in
+# the required position using grid
+# method
+service_tag_label.grid(row=0, column=0)
+service_tag_entry.grid(row=0, column=1)
+sub_btn.grid(row=2, column=1)
+
+# performing an infinite loop
+# for the window to display
+root.mainloop()
