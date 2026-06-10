@@ -11,6 +11,8 @@ root.geometry("600x400")
 # for storing service tag and password
 service_tag = tk.StringVar()
 st_password = tk.StringVar()
+password_display = tk.StringVar()
+password_display.set("Password will appear here")
 
 
 # defining a function that will
@@ -22,8 +24,8 @@ def submit():
     print("The service tag is : " + st)
 
     result = subprocess.run(
-		["powershell", 
-		"-Command", 
+		["powershell",
+		"-Command",
 		f"Get-LapsADPassword -Identity {st} -AsPlainText"],
 		capture_output=True,
 		text=True
@@ -35,8 +37,10 @@ def submit():
     if match:
         st_password = match.group(1)
         print("The password is : " + st_password)
+        password_display.set(st_password)
     else:
         print("Password not found.")
+        password_display.set("Password not found.")
 
     with open(r"C:\Users\cdove\OneDrive - Michels Corporation\Documents\Scripts\LAPSHistory.txt", "a", encoding="utf-8") as f:
         f.write(f"\n{st}, {st_password}")
@@ -51,6 +55,9 @@ service_tag_label = tk.Label(root, text='Service Tag', font=('calibre', 10, 'bol
 # creating a entry for input
 # name using widget Entry
 service_tag_entry = tk.Entry(root, textvariable=service_tag, font=('calibre', 10, 'normal'))
+
+password_label = tk.Label(root, text='Password', font=('calibre', 10, 'bold'))
+password_label.grid(row=3, column=1)
 
 # creating a button using the widget
 # Button that will call the submit function
