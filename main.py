@@ -1,11 +1,17 @@
 import tkinter as tk
 import subprocess
 import re
+import os
 
 root = tk.Tk()
 
 # setting the windows size
 root.geometry("600x400")
+
+# gets the userprofile name, ex: cdove
+os.environ["USERPROFILE"]
+# sets the file_path to the users desktop
+file_path = os.path.join(os.environ["USERPROFILE"], "Desktop")
 
 # declaring string variable
 # for storing service tag and password
@@ -42,7 +48,7 @@ def submit():
         print("Password not found.")
         password_display.set("Password not found.")
 
-    with open(r"C:\Users\cdove\OneDrive - Michels Corporation\Documents\Scripts\LAPSHistory.txt", "a", encoding="utf-8") as f:
+    with open(f"{file_path}", "a", encoding="utf-8") as f:
         f.write(f"{st}, {st_password}\n")
 
     load_history()
@@ -51,7 +57,7 @@ def submit():
 
 def load_history():
     try:
-        with open(r"C:\Users\cdove\OneDrive - Michels Corporation\Documents\Scripts\LAPSHistory.txt", "r", encoding="utf-8") as f:
+        with open(f"{file_path}", "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         recent = lines[-10:]
@@ -68,7 +74,7 @@ def load_history():
 # name using widget Label
 service_tag_label = tk.Label(root, text='Service Tag', font=('calibre', 10, 'bold'))
 
-# creating a entry for input
+# creating an entry for input
 # name using widget Entry
 service_tag_entry = tk.Entry(root, textvariable=service_tag, font=('calibre', 10, 'normal'))
 
