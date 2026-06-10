@@ -26,7 +26,7 @@ password_display.set("Password will appear here")
 # defining a function that will
 # get the name and password and
 # print them on the screen
-def submit():
+def submit(event=None):
     st = service_tag.get()
 
     print("The service tag is : " + st)
@@ -84,20 +84,22 @@ service_tag_label = tk.Label(root, text='Service Tag', font=('calibre', 10, 'bol
 # name using widget Entry
 service_tag_entry = tk.Entry(root, textvariable=service_tag, font=('calibre', 10, 'normal'))
 
+service_tag_entry.bind("<Return>", submit)
+
 password_label = tk.Label(root, textvariable=password_display, font=('calibre', 10, 'bold'))
-password_label.grid(row=3, column=1)
+password_label.grid(row=4, column=0)
 
 # creating a button using the widget
 # Button that will call the submit function
 sub_btn = tk.Button(root, text='Submit', command=submit)
 
-history_box = tk.Listbox(root, height=10, width=50)
-history_box.grid(row=4, column=0, columnspan=2)
+history_box = tk.Listbox(root, height=10, width=50, font=(';calibre', 10, 'bold'))
+history_box.grid(row=5, column=0, columnspan=2)
 
 scrollbar = tk.Scrollbar(root, command=history_box.yview)
 history_box.config(yscrollcommand=scrollbar.set)
 
-scrollbar.grid(row=4, column=2, sticky='ns')
+scrollbar.grid(row=5, column=2, sticky='ns')
 
 # placing the label and entry in
 # the required position using grid
