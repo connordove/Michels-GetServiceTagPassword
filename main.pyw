@@ -4,14 +4,15 @@ import subprocess
 import threading
 import ctypes
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, Label
 from datetime import date
+from PIL import Image, ImageTk
 
 root = tk.Tk()
 root.title("Password Manager")
 
 # setting the windows size
-root.geometry("650x350")
+root.geometry("650x500")
 
 today = date.today()
 
@@ -179,12 +180,21 @@ history_box.config(yscrollcommand=scrollbar.set)
 # the required position using grid
 # method
 service_tag_label.grid(row=0, column=0)
-service_tag_entry.grid(row=0, column=1)
-sub_btn.grid(row=2, column=1)
-delete_btn.grid(row=2, column=2)
+service_tag_entry.grid(row=0, column=1, sticky='w')
+sub_btn.grid(row=2, column=1, sticky='w')
+delete_btn.grid(row=2, column=2, sticky='w')
 password_label.grid(row=4, column=0)
-history_box.grid(row=5, column=0, columnspan=2)
-scrollbar.grid(row=5, column=2, sticky='ns')
+history_box.grid(row=5, column=0, columnspan=3)
+scrollbar.grid(row=5, column=3, sticky='ns')
+
+
+img_file = Image.open("Powercat.png")
+img_file = img_file.resize((180, 150))
+
+tk_image = ImageTk.PhotoImage(img_file)
+
+image_label = tk.Label(root, image=tk_image)
+image_label.grid(row=6, column=0, columnspan=1, sticky='w')
 
 
 # loads the history
