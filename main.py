@@ -56,7 +56,7 @@ service_tag_label = tk.Label(root, text='Service Tag', font=('calibre', 10, 'bol
 # name using widget Entry
 service_tag_entry = tk.Entry(root, textvariable=service_tag, font=('calibre', 10, 'normal'))
 
-password_label = tk.Label(root, text='Password', font=('calibre', 10, 'bold'))
+password_label = tk.Label(root, textvariable=password_display, font=('calibre', 10, 'bold'))
 password_label.grid(row=3, column=1)
 
 # creating a button using the widget
