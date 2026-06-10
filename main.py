@@ -29,7 +29,8 @@ def run_powershell(st):
          "-Command",
          f"Get-LapsADPassword -Identity {st} -AsPlainText"],
         capture_output=True,
-        text=True
+        text=True,
+        creationflags=subprocess.CREATE_NO_WINDOW
     )
 
     output = result.stdout
@@ -44,7 +45,7 @@ def run_powershell(st):
         st = st_local
 
     # Update GUI safely
-    root.after(0, lambda: password_display.set(pwd))
+    root.after(0, lambda: password_display.set("SN, Password"))
 
     # Write to file
     try:
@@ -65,10 +66,10 @@ def submit(event=None):
     st = service_tag.get()
 
     if st == "":
-        print("Service Tag not found.")
+        print("Service Number not found.")
         return
 
-    print("The service tag is : " + st)
+    print("The service number is : " + st)
 
     password_display.set("Running...")
 
@@ -97,7 +98,7 @@ def load_history():
 
 # creating a label for
 # name using widget Label
-service_tag_label = tk.Label(root, text='Service Tag', font=('calibre', 10, 'bold'))
+service_tag_label = tk.Label(root, text='Service Number', font=('calibre', 10, 'bold'))
 
 # creating an entry for input
 # name using widget Entry
