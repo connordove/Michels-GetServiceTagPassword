@@ -50,11 +50,9 @@ def submit(event=None):
     if match:
         st_password = match.group(1)
         print("The password is : " + st_password)
-        password_display.set(st_password)
     else:
         print("Password not found.")
         st = "INVALID"
-        password_display.set("Password not found.")
     try:
         with open(file_path, "a", encoding="utf-8") as f:
             f.write(f"{st}, {st_password}\n")
