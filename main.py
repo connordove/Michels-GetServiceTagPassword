@@ -8,9 +8,11 @@ from ctypes import wintypes
 from tkinter import messagebox
 
 root = tk.Tk()
+root.title("Password Manager")
 
 # setting the windows size
 root.geometry("600x400")
+root.resizable(False, False)
 
 # gets the userprofile name, ex: cdove
 # sets the file_path to the users desktop, prints path in terminal
@@ -123,7 +125,7 @@ def delete_history():
             ctypes.windll.user32.PostMessageW(
                 HWND_BROADCAST, WM_COMMAND, REFRESH, 0
             )
-
+            history_box.insert(tk.END, "No history file found.")
             print("File deleted and desktop refreshed successfully.")
         else:
             print("No history file found.")
