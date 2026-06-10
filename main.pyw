@@ -4,8 +4,8 @@ import subprocess
 import threading
 import ctypes
 import tkinter as tk
-from ctypes import wintypes
 from tkinter import messagebox
+from datetime import date
 
 root = tk.Tk()
 root.title("Password Manager")
@@ -13,11 +13,17 @@ root.title("Password Manager")
 # setting the windows size
 root.geometry("550x350")
 
+today = date.today()
+
 # gets the userprofile name, ex: cdove
 # sets the file_path to the users desktop, prints path in terminal
 desktop = os.path.join(os.environ["USERPROFILE"], "OneDrive - Michels Corporation", "Desktop")
 file_path = os.path.join(desktop, "LAPSHistory.txt")
 print("History File Path is : " + file_path)
+print(today.strftime('%m/%d/%Y'))
+today_format = today.strftime('%m/%d/%Y').split('/')
+today_format = date(int(today_format[2]), int(today_format[0]), int(today_format[1]))
+print(today_format)
 
 # declaring string variable
 # for storing service tag and password
@@ -28,12 +34,12 @@ password_display = tk.StringVar()
 password_display.set("Password will appear here")
 
 # defining a function that will
-# run powershell command
+# run PowerShell command
 # sort for password from output
 # updates GUI and trys writing to a file
 def run_powershell(st):
     result = subprocess.run(
-        ["powershell",
+        ["PowerShell",
          "-Command",
          f"Get-LapsADPassword -Identity {st} -AsPlainText"],
         capture_output=True,
@@ -43,14 +49,23 @@ def run_powershell(st):
 
     output = result.stdout
 
-    match = re.search(r"Password\s*:\s*(\S+)", output)
+    password_match = re.search(r"Password\s*:\s*(\S+)", output)
+    expiration_match = re.search(r"ExpirationTimestamp\s*:\s*(\S+)", output)
 
-    if match:
-        pwd = match.group(1)
+    expired_s = expiration_match.group(1).split('/')
+    expired_s = date(int(expired_s[2]), int(expired_s[0]), int(expired_s[1]))
+    expired = (expired_s < today_format)
+    print("Today " + str(today_format))
+    print("Expired " + str(expired_s))
+    print(expired)
+
+    if password_match:
+        pwd = password_match.group(1)
     else:
         pwd = "ERROR"
-        st_local = "INVALID"
-        st = st_local
+
+    if expired:
+        pwd = password_match.group(1) + "  |EXPIRED|"
 
     # Update GUI safely
     root.after(0, lambda: password_display.set("SN, Password"))
@@ -154,7 +169,7 @@ sub_btn = tk.Button(root, text='Submit', command=submit, width=10)
 delete_btn = tk.Button(root, text='Delete History', command=delete_history)
 
 # creating a listbox to display service tag and password history
-history_box = tk.Listbox(root, height=10, width=30, font=('calibre', 14, 'bold'), fg='black')
+history_box = tk.Listbox(root, height=10, width=35, font=('calibre', 14, 'bold'), fg='black')
 
 # creating a scroll bar to view large amounts of st and password history
 scrollbar = tk.Scrollbar(root, command=history_box.yview)
