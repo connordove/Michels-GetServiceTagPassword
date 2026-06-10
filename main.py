@@ -53,6 +53,7 @@ def submit(event=None):
         password_display.set(st_password)
     else:
         print("Password not found.")
+        st = "INVALID"
         password_display.set("Password not found.")
     try:
         with open(file_path, "a", encoding="utf-8") as f:
@@ -62,7 +63,7 @@ def submit(event=None):
 
     load_history()
 
-    service_tag.set("INVALID")
+    service_tag.set("")
 
 # defining a function that will
 # load name and passwords from
