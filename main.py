@@ -107,7 +107,8 @@ def load_history():
         history_box.insert(tk.END, "No history file found.")
 
 def delete_history():
-    confirm_delete_box = tk.messagebox.askyesno()
+    confirm_delete_box = tk.messagebox.askyesno("Delete History",
+                                                "Are you sure you want to delete password History?")
 
     if confirm_delete_box:
         print("Deleting history file.")
