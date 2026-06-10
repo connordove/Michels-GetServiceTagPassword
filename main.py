@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess
+import threading
 import tkinter as tk
 
 root = tk.Tk()
@@ -9,7 +10,6 @@ root = tk.Tk()
 root.geometry("600x400")
 
 # gets the userprofile name, ex: cdove
-os.environ["USERPROFILE"]
 # sets the file_path to the users desktop, prints path in terminal
 desktop = os.path.join(os.environ["USERPROFILE"], "OneDrive - Michels Corporation", "Desktop")
 file_path = os.path.join(desktop, "LAPSHistory.txt")
@@ -23,6 +23,39 @@ password_display = tk.StringVar()
 # sets password_display label to display following text
 password_display.set("Password will appear here")
 
+def run_powershell(st):
+    result = subprocess.run(
+        ["powershell",
+         "-Command",
+         f"Get-LapsADPassword -Identity {st} -AsPlainText"],
+        capture_output=True,
+        text=True
+    )
+
+    output = result.stdout
+
+    match = re.search(r"Password\s*:\s*(\S+)", output)
+
+    if match:
+        pwd = match.group(1)
+    else:
+        pwd = "ERROR"
+        st_local = "INVALID"
+        st = st_local
+
+    # Update GUI safely
+    root.after(0, lambda: password_display.set(pwd))
+
+    # Write to file
+    try:
+        with open(file_path, "a", encoding="utf-8") as f:
+            f.write(f"{st}, {pwd}\n")
+    except Exception as e:
+        print("File write error:", e)
+
+    # Refresh history safely
+    root.after(0, load_history)
+
 
 # defining a function that will
 # get the name and password and
@@ -30,36 +63,16 @@ password_display.set("Password will appear here")
 # save the name and password to file
 def submit(event=None):
     st = service_tag.get()
+
     if st == "":
         print("Service Tag not found.")
         return
 
     print("The service tag is : " + st)
 
-    result = subprocess.run(
-		["powershell",
-		"-Command",
-		f"Get-LapsADPassword -Identity {st} -AsPlainText"],
-		capture_output=True,
-		text=True
-    )
-    output = result.stdout
-    match = re.search(r"Password\s*:\s*(\S+)", output)
-    st_password = "ERROR"
+    password_display.set("Running...")
 
-    if match:
-        st_password = match.group(1)
-        print("The password is : " + st_password)
-    else:
-        print("Password not found.")
-        st = "INVALID"
-    try:
-        with open(file_path, "a", encoding="utf-8") as f:
-            f.write(f"{st}, {st_password}\n")
-    except:
-        print('File not found.')
-
-    load_history()
+    threading.Thread(target=run_powershell, args=(st,), daemon=True).start()
 
     service_tag.set("")
 
@@ -102,7 +115,7 @@ password_label.grid(row=4, column=0)
 sub_btn = tk.Button(root, text='Submit', command=submit)
 
 # creating a listbox to display service tag and password history
-history_box = tk.Listbox(root, height=10, width=50, font=(';calibre', 10, 'bold'))
+history_box = tk.Listbox(root, height=10, width=50, font=('calibre', 10, 'bold'))
 history_box.grid(row=5, column=0, columnspan=2)
 
 # creating a scroll bar to view large amounts of st and password history
