@@ -77,6 +77,7 @@ def submit(event=None):
 
     service_tag.set("")
 
+
 # defining a function that will
 # load name and passwords from
 # the given file path and display in
@@ -86,12 +87,14 @@ def load_history():
         with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
-        recent = lines[-10:]
+        recent = lines[-100:]
 
         history_box.delete(0, tk.END)
 
         for line in recent:
             history_box.insert(tk.END, line.strip())
+
+        history_box.see(tk.END)
 
     except FileNotFoundError:
         history_box.insert(tk.END, "No history file found.")
