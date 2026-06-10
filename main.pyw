@@ -196,6 +196,9 @@ tk_image = ImageTk.PhotoImage(img_file)
 image_label = tk.Label(root, image=tk_image)
 image_label.grid(row=6, column=0, columnspan=1, sticky='w')
 
+cats_label = tk.Label(root, text='Go Cats!', font=('calibre', 20, 'bold', 'underline'), fg='#512888')
+cats_label.grid(row=6, column=1, columnspan=1, sticky='w')
+
 
 # loads the history
 load_history()
