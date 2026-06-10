@@ -2,6 +2,7 @@ import tkinter as tk
 import subprocess
 import re
 import os
+from os.path import join
 
 root = tk.Tk()
 
@@ -47,9 +48,11 @@ def submit():
     else:
         print("Password not found.")
         password_display.set("Password not found.")
-
-    with open(f"{file_path}", "a", encoding="utf-8") as f:
-        f.write(f"{st}, {st_password}\n")
+    try:
+        with open(join(file_path, "LAPSHistory.txt"), "a", encoding="utf-8") as f:
+            f.write(f"{st}, {st_password}\n")
+    except:
+        print('File not found.')
 
     load_history()
 
@@ -57,7 +60,7 @@ def submit():
 
 def load_history():
     try:
-        with open(f"{file_path}", "r", encoding="utf-8") as f:
+        with open(join(file_path, "LAPSHistory.txt"), "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         recent = lines[-10:]
