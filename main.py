@@ -22,12 +22,12 @@ def submit():
     print("The service tag is : " + st)
 
     result = subprocess.run(
-		["powershell", 
-		"-Command", 
-		f"Get-LapsADPassword -Identity {st} -asplaintext"],
-		capture_output=True,
-		text=True
-     ) 
+        ["powershell",
+         "-Command",
+         f"Get-LapsADPassword -Identity {st} - asplaintext"],
+        capture_output=True,
+        text=True
+    )
 
     output = result.stdout
     match = re.search(r"Password\s*:\s*(\S+)", output)
@@ -38,6 +38,9 @@ def submit():
         print("The password is : " + st_password)
     else:
         print("Password not found.")
+
+    with open(r"C:\Users\cdove\OneDrive - Michels Corporation\Documents\Scripts\LAPSHistory.txt", "a", encoding="utf-8") as f:
+        f.write(f"\n{st}, {st_password}\n")
 
     service_tag.set("")
 
