@@ -3,8 +3,9 @@ import re
 import subprocess
 import threading
 import ctypes
-from ctypes import wintypes
 import tkinter as tk
+from ctypes import wintypes
+from tkinter import messagebox
 
 root = tk.Tk()
 
@@ -106,21 +107,28 @@ def load_history():
         history_box.insert(tk.END, "No history file found.")
 
 def delete_history():
-    history_box.delete(0, tk.END)
-    if os.path.exists(file_path):
-        os.remove(file_path)
-        # Force Windows Explorer refresh
-        HWND_BROADCAST = 0xFFFF
-        WM_COMMAND = 0x0111
-        REFRESH = 41504
+    confirm_delete_box = tk.messagebox.askyesno()
 
-        ctypes.windll.user32.PostMessageW(
-            HWND_BROADCAST, WM_COMMAND, REFRESH, 0
-        )
-        
-        print("File deleted and desktop refreshed successfully.")
+    if confirm_delete_box:
+        print("Deleting history file.")
+        history_box.delete(0, tk.END)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            # Force Windows Explorer refresh
+            HWND_BROADCAST = 0xFFFF
+            WM_COMMAND = 0x0111
+            REFRESH = 41504
+
+            ctypes.windll.user32.PostMessageW(
+                HWND_BROADCAST, WM_COMMAND, REFRESH, 0
+            )
+
+            print("File deleted and desktop refreshed successfully.")
+        else:
+            print("No history file found.")
     else:
-        print("No history file found.")
+        print("Chose not to delete history.")
+        return
 
 
 # creating a label for
