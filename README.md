@@ -26,3 +26,13 @@ added an exe version of the python script. Easier to download and run :)
 added qr code generator. The selected password
 will generate as a QR code and can be scanned 
 using a barcode reader.
+
+#
+
+-------- UPDATE --------
+
+it seems as though I don't know how to sign an exe so the file is flagged
+by windows. While I work on figuring out how to do that... I promise this
+isn't malware and I am not trying to hack ur pc <3
+
+**The exe is safe!**
