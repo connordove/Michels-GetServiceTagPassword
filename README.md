@@ -13,8 +13,6 @@
 8. And that's it! Please let me know if you have any issues!! 
 
 #
-\
-\
 -------- UPDATE --------
 
 added an exe version of the python script. Easier to download and run :)
