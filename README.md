@@ -1,6 +1,6 @@
 # Hello! Welcome to my first python program :)
 
-## Please download [`Get LAPS.exe`](test)
+## Please download [`Get LAPS.exe`](https://github.com/connordove/Michels-GetServiceTagPassword/blob/main/Get%20LAPS.exe)
 
 ### Steps to run:
 1. Download `Get LAPS.exe`. You can view the programs code within the `main.pyw`.
