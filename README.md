@@ -1,4 +1,4 @@
-# Hello! Welcome to my first python program :)
+# Hello! Welcome to my first Python program :)
 
 ## Please download [`Get LAPS.exe`](https://github.com/connordove/Michels-GetServiceTagPassword/blob/main/Get%20LAPS.exe)
 
@@ -15,7 +15,7 @@
 #
 -------- UPDATE --------
 
-added an exe version of the python script. Easier to download and run :)
+added an exe version of the Python script. Easier to download and run :)
 
 #
 
@@ -31,6 +31,6 @@ using a barcode reader.
 
 it seems as though I don't know how to sign an exe so the file is flagged
 by windows. While I work on figuring out how to do that... I promise this
-isn't malware and I am not trying to hack ur pc <3
+isn't malware, and I am not trying to hack ur pc <3
 
 **The exe is safe!**
