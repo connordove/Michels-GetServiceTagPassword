@@ -183,7 +183,7 @@ def on_select(event):
         # Get selected line
         selected_index = history_box.curselection()[0]
         p = history_box.get(selected_index).split(", ")
-        st = p[1].split(" |")
+        st = p[1].split("  |")
         selected_text = st[0]
 
         print("Selected:", selected_text)
