@@ -1,23 +1,32 @@
 import os
+import sys
 import re
 import subprocess
 import threading
 import ctypes
+import qrcode
 import tkinter as tk
-from ctypes import wintypes
-from tkinter import messagebox
+from tkinter import messagebox, Label
+from datetime import date
+from PIL import Image, ImageTk
 
 root = tk.Tk()
 root.title("Password Manager")
 
 # setting the windows size
-root.geometry("550x350")
+root.geometry("650x525")
+
+today = date.today()
 
 # gets the userprofile name, ex: cdove
 # sets the file_path to the users desktop, prints path in terminal
 desktop = os.path.join(os.environ["USERPROFILE"], "OneDrive - Michels Corporation", "Desktop")
 file_path = os.path.join(desktop, "LAPSHistory.txt")
 print("History File Path is : " + file_path)
+print(today.strftime('%m/%d/%Y'))
+today_format = today.strftime('%m/%d/%Y').split('/')
+today_format = date(int(today_format[2]), int(today_format[0]), int(today_format[1]))
+print(today_format)
 
 # declaring string variable
 # for storing service tag and password
@@ -28,12 +37,12 @@ password_display = tk.StringVar()
 password_display.set("Password will appear here")
 
 # defining a function that will
-# run powershell command
+# run PowerShell command
 # sort for password from output
 # updates GUI and trys writing to a file
 def run_powershell(st):
     result = subprocess.run(
-        ["powershell",
+        ["PowerShell",
          "-Command",
          f"Get-LapsADPassword -Identity {st} -AsPlainText"],
         capture_output=True,
@@ -43,14 +52,25 @@ def run_powershell(st):
 
     output = result.stdout
 
-    match = re.search(r"Password\s*:\s*(\S+)", output)
+    password_match = re.search(r"Password\s*:\s*(\S+)", output)
+    expiration_match = re.search(r"ExpirationTimestamp\s*:\s*(\S+)", output)
+    if expiration_match:
+        expired_s = expiration_match.group(1).split('/')
+        expired_s = date(int(expired_s[2]), int(expired_s[0]), int(expired_s[1]))
+        expired = (expired_s < today_format)
+        print("Today " + str(today_format))
+        print("Expired " + str(expired_s))
+        print(expired)
 
-    if match:
-        pwd = match.group(1)
+    if password_match:
+        pwd = password_match.group(1)
+        if expired:
+            pwd = password_match.group(1) + f"  |{expired_s}|"
     else:
         pwd = "ERROR"
-        st_local = "INVALID"
-        st = st_local
+
+    create_qr(pwd)
+
 
     # Update GUI safely
     root.after(0, lambda: password_display.set("SN, Password"))
@@ -71,7 +91,7 @@ def run_powershell(st):
 # print them on the screen
 # save the name and password to file
 def submit(event=None):
-    st = service_tag.get()
+    st = service_tag.get().upper()
 
     if st == "":
         print("Service Number not found.")
@@ -132,6 +152,58 @@ def delete_history():
         print("Chose not to delete history.")
         return
 
+# deletes a selected line
+def delete_selected():
+    print("Deleting selected: " + str(history_box.curselection()) + "  ... ")
+    try:
+        selected_index = history_box.curselection()[0]
+
+        with open(file_path, "r", encoding="utf-8") as fr:
+            lines = fr.readlines()
+
+            with open(file_path, "w", encoding="utf-8") as fw:
+                for i, line in enumerate(lines):
+                    if i != selected_index:
+                        fw.write(line)
+        load_history()
+        print("Finished deleting selected")
+
+    except Exception as e:
+        print("Error deleting line: ", e)
+
+def create_qr(data):
+    qr = qrcode.make(data)
+    qr = qr.resize((150,150))
+    tk_img = ImageTk.PhotoImage(qr)
+    qr_label.config(image=tk_img)
+    qr_label.image = tk_img
+
+def on_select(event):
+    try:
+        # Get selected line
+        selected_index = history_box.curselection()[0]
+        p = history_box.get(selected_index).split(", ")
+        st = p[1].split(" |")
+        selected_text = st[0]
+
+        print("Selected:", selected_text)
+
+        # Generate QR from selected line
+        create_qr(selected_text)
+
+    except IndexError:
+        pass
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+# No
+
 
 # creating a label for
 # name using widget Label
@@ -151,10 +223,18 @@ password_label = tk.Label(root, textvariable=password_display, font=('calibre', 
 # Button that will call the submit function
 sub_btn = tk.Button(root, text='Submit', command=submit, width=10)
 
+# creating delete history button
 delete_btn = tk.Button(root, text='Delete History', command=delete_history)
 
+# creating delete selected button
+delete_selected_btn = tk.Button(root, text='Delete Selected', command=delete_selected)
+
 # creating a listbox to display service tag and password history
-history_box = tk.Listbox(root, height=10, width=30, font=('calibre', 14, 'bold'), fg='black')
+history_box = tk.Listbox(root, height=10, width=43, font=('calibre', 14, 'bold'), fg='black')
+history_box.bind("<<ListboxSelect>>", on_select)
+
+qr_label = tk.Label(root)
+qr_title_label = tk.Label(root, text='QR code below is LAPS password')
 
 # creating a scroll bar to view large amounts of st and password history
 scrollbar = tk.Scrollbar(root, command=history_box.yview)
@@ -164,12 +244,26 @@ history_box.config(yscrollcommand=scrollbar.set)
 # the required position using grid
 # method
 service_tag_label.grid(row=0, column=0)
-service_tag_entry.grid(row=0, column=1)
-sub_btn.grid(row=2, column=1)
-delete_btn.grid(row=2, column=2)
+service_tag_entry.grid(row=0, column=1, sticky='w')
+sub_btn.grid(row=2, column=1, sticky='w')
+delete_selected_btn.grid(row=2, column=2, sticky='ns')
+delete_btn.grid(row=2, column=3, sticky='w')
 password_label.grid(row=4, column=0)
-history_box.grid(row=5, column=0, columnspan=2)
-scrollbar.grid(row=5, column=2, sticky='ns')
+history_box.grid(row=5, column=0, columnspan=3)
+scrollbar.grid(row=5, column=3, sticky='ns')
+qr_title_label.grid(row=6, column=0)
+qr_label.grid(row=7, column=0, padx=10, pady=10)
+
+img_file = Image.open(resource_path("Powercat.png"))
+img_file = img_file.resize((180, 150))
+
+tk_image = ImageTk.PhotoImage(img_file)
+
+image_label = tk.Label(root, image=tk_image)
+image_label.grid(row=8, column=0, columnspan=1, sticky='w')
+
+cats_label = tk.Label(root, text='Go Cats!', font=('calibre', 20, 'bold', 'underline'), fg='#512888')
+cats_label.grid(row=8, column=1, columnspan=1, sticky='w')
 
 
 # loads the history
