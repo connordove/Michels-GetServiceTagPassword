@@ -6,15 +6,17 @@ import threading
 import ctypes
 import qrcode
 import tkinter as tk
-from tkinter import messagebox, Label
+from tkinter import messagebox, Label, ttk
 from datetime import date
 from PIL import Image, ImageTk
 
 root = tk.Tk()
 root.title("Password Manager")
+root.iconbitmap('michels_icon.ico')
 
 # setting the windows size
 root.geometry("650x525")
+
 
 today = date.today()
 
