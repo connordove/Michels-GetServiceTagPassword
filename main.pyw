@@ -85,7 +85,6 @@ def run_powershell(st):
     # Refresh history safely
     root.after(0, load_history)
 
-
 # defining a function that will
 # get the name and password and
 # print them on the screen
@@ -104,7 +103,6 @@ def submit(event=None):
     threading.Thread(target=run_powershell, args=(st,), daemon=True).start()
 
     service_tag.set("")
-
 
 # defining a function that will
 # load name and passwords from
