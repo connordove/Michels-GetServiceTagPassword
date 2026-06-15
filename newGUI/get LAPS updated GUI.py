@@ -2,18 +2,20 @@ import ctypes
 import os
 import re
 import subprocess
+import sys
 import tkinter
 from tkinter import messagebox
 from datetime import date
 import customtkinter
 import customtkinter as customTk
 import qrcode
+from PIL import Image, ImageTk
 from customtkinter import CTkImage
 
 class App(customTk.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("900x600")
+        self.geometry("900x580")
         self.title("My GUI")
 
         # --- Frame ---
@@ -41,9 +43,20 @@ class App(customTk.CTk):
         self.password_label = customTk.CTkLabel(self, text="Password will appear below", font=('default', 22, "bold"), anchor="w")
         self.qr_label = customTk.CTkLabel(self, text="")
 
+
         # --- Entry ---
         self.sn_entry = customTk.CTkEntry(self, placeholder_text="Enter SN Here", font=('default', 18, "bold"))
         self.sn_entry.bind("<Return>", self.submit_service_tag)
+
+        # --- Image ---
+        self.image_file = customtkinter.CTkImage(light_image=Image.open(self.resource_path("newGUI\\MichelsWeDoThat.png")),
+                                            dark_image=Image.open(self.resource_path("newGUI\\MichelsWeDoThat.png")),
+                                            size=(850, 50))
+        self.michels_label = customTk.CTkLabel(self, text="", image=self.image_file)
+
+        # --- GIF ---
+        self.gif1 = CTkGif(self, "newGUI\\djCat.gif", size=(600,400))
+        self.gif2 = CTkGif(self, "newGUI\\HappyCat.gif", size=(100, 100))
 
         # --- Layout ---
         self.sn_label.grid(row=0, column=0, padx=20, pady=15)
@@ -55,12 +68,20 @@ class App(customTk.CTk):
         self.qr_frame.grid(row=3, column=7, rowspan=2, padx=5, pady=20, sticky="nsew")
         self.delete_selected_button.grid(row=5, column=7, padx=10, pady=20, sticky = "n")
         self.delete_history_button.grid(row=5, column=7, padx=10, pady=20, sticky="s")
+        self.michels_label.grid(row=7, column=0, padx=20, columnspan=10, sticky="w")
+        self.gif1.grid(row=0, column=0, columnspan=10, rowspan=10)
+        self.gif2.grid(row=0, column=0)
+
 
 
     #region defs
     def submit_service_tag(self, event=None):
         service_number = self.sn_entry.get().upper()
         self.focus()    # changes the focus to main window, removes blinking cursor
+        if service_number == "DOVE":
+            self.surprise()
+            return
+
         # runs if service number is not blank
         if service_number != "":
             print("SERVICE NUMBER: " + service_number)
@@ -210,6 +231,20 @@ class App(customTk.CTk):
 
         self.qr_frame.label.configure(image=img, text="")
         self.qr_frame.label.image = img  # prevent garbage collection
+
+    def resource_path(self, relative_path):
+        try:
+            base_path = sys._MEIPASS
+        except AttributeError:
+            base_path = os.path.abspath(".")
+
+        return os.path.join(base_path, relative_path)
+
+    def surprise(self):
+        self.gif1.start()
+        self.gif2.start()
+
+
     #endregion
 
 class PasswordList(customTk.CTkScrollableFrame):
@@ -291,6 +326,78 @@ class QRCodeFrame(customTk.CTkFrame):
         self.label = customTk.CTkLabel(self, text="QR Code Will Appear Here", font=('Roboto', 16))
         self.label.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
+# THIS WAS MADE FROM COPILOT
+class CTkGif(customTk.CTkLabel):
+    def __init__(self, master, path, size=None, loop=True):
+        """
+        Args:
+            master: parent widget
+            path (str): path to GIF file
+            size (tuple): (width, height) or None for original size
+            loop (bool): loop animation
+        """
+        super().__init__(master, text="")
+
+        self.path = path
+        self.size = size
+        self.loop = loop
+
+        self.frames = []
+        self.delays = []
+
+        self._load_gif()
+
+        self._current = 0
+        self._running = False
+
+    def _load_gif(self):
+        gif = Image.open(self.path)
+
+        try:
+            while True:
+                frame = gif.copy()
+
+                # Resize if needed
+                if self.size:
+                    frame = frame.resize(self.size)
+
+                self.frames.append(ImageTk.PhotoImage(frame))
+
+                # Get frame duration (fallback = 100ms)
+                delay = gif.info.get("duration", 100)
+                self.delays.append(delay)
+
+                gif.seek(len(self.frames))
+        except EOFError:
+            pass
+
+    def start(self):
+        if not self._running:
+            self._running = True
+            self._animate()
+
+    def stop(self):
+        self._running = False
+
+    def _animate(self):
+        if not self._running or not self.frames:
+            return
+
+        self.configure(image=self.frames[self._current])
+
+        delay = self.delays[self._current]
+        self._current += 1
+
+        if self._current >= len(self.frames):
+            if self.loop:
+                self._current = 0
+            else:
+                self._running = False
+                return
+
+        self.after(delay, self._animate)
+
+
 if __name__ == '__main__':
     customtkinter.set_default_color_theme(
         r"C:\Users\cdove\PycharmProjects\Michels-GetServiceTagPassword\newGUI\blue.json")
@@ -302,5 +409,6 @@ if __name__ == '__main__':
     app.load_history()
     app.title("Get LAPS History")
     app.iconbitmap('michels_icon.ico')
+
 
     app.mainloop()
