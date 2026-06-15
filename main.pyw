@@ -12,6 +12,8 @@ from PIL import Image, ImageTk
 
 root = tk.Tk()
 root.title("Password Manager")
+root.iconbitmap('michels_icon.ico')
+
 
 # setting the windows size
 root.geometry("650x525")

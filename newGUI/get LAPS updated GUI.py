@@ -14,13 +14,8 @@ from customtkinter import CTkImage
 class App(customTk.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("1000x800")
+        self.geometry("900x600")
         self.title("My GUI")
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-        self.grid_columnconfigure(2, weight=1)
-        self.grid_rowconfigure(3, weight=1)
-        self.grid_rowconfigure(4, weight=3)
 
         # --- Frame ---
 
@@ -31,35 +26,36 @@ class App(customTk.CTk):
             height=400
         )
 
-        self.password_frame.grid(row=3, column=0, columnspan=7, padx=20, pady=20)
+        self.qr_frame = QRCodeFrame (master=self,
+                                     width=200,
+                                     height=200,
+                                     fg_color="transparent")
 
         # --- Button ---
         self.debug_btn = customTk.CTkButton(self, text="DEBUG")
-        self.debug_btn.grid(row=0, column=10, padx=20, pady=20)
-
         self.submit_button = customTk.CTkButton(self, command=self.submit_service_tag, text="Submit")
-        self.submit_button.grid(row=0, column=6, padx=20, pady=20)
-
         self.delete_history_button = customTk.CTkButton(self, command=self.delete_history, text="Delete History")
-        self.delete_history_button.grid(row=1, column=6, padx=20, pady=20)
-
         self.delete_selected_button = customTk.CTkButton(self, command=self.delete_selected, text="Delete Selected")
-        self.delete_selected_button.grid(row=1, column=7, padx=20, pady=20)
 
         # --- Label ---
         self.sn_label = customTk.CTkLabel(self, text="Service Number", font=('default', 22, "bold"))
-        self.sn_label.grid(row=0, column=0, padx=20, pady=20)
-
         self.password_label = customTk.CTkLabel(self, text="Password will appear below", font=('default', 22, "bold"), anchor="w")
-        self.password_label.grid(row=2, column=0, padx=20, pady=20, columnspan=2)
-
         self.qr_label = customTk.CTkLabel(self, text="")
-        self.qr_label.grid(row=3, column=7, columnspan=4)
 
         # --- Entry ---
         self.sn_entry = customTk.CTkEntry(self, placeholder_text="Enter SN Here", font=('default', 18, "bold"))
-        self.sn_entry.grid(row=0, column=1, padx=20, pady=20)
         self.sn_entry.bind("<Return>", self.submit_service_tag)
+
+        # --- Layout ---
+        self.sn_label.grid(row=0, column=0, padx=20, pady=15)
+        self.sn_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.submit_button.grid(row=0, column=2, padx=15, pady=5)
+        self.password_label.grid(row=2, column=0, padx=30, pady=10, columnspan=2, sticky="w")
+        self.password_frame.grid(row=3, column=0, columnspan=7, rowspan=4,padx=20, pady=20)
+        self.qr_label.grid(row=3, column=7, columnspan=4, sticky="n")
+        self.qr_frame.grid(row=3, column=7, rowspan=2, padx=5, pady=20, sticky="nsew")
+        self.delete_history_button.grid(row=5, column=7, padx=10, pady=20, sticky="n")
+        self.delete_selected_button.grid(row=5, column=7, padx=10, pady=20, sticky = "s")
 
     #region defs
 
@@ -159,8 +155,8 @@ class App(customTk.CTk):
                         HWND_BROADCAST, WM_COMMAND, REFRESH, 0
                     )
                     # delete QR code
-                    self.qr_label.configure(image=None, text="")
-                    self.qr_label.image = None
+                    self.qr_frame.label.configure(image=None, text="")
+                    self.qr_frame.label.image = None
                     print("File deleted and desktop refreshed successfully.")
                 else:
                     print("No history file found.")
@@ -207,21 +203,16 @@ class App(customTk.CTk):
 
     def create_qr_code(self, data):
         qr = qrcode.make(data)
-
         qr = qr.resize((200, 200))
-
         img = customTk.CTkImage(
             light_image=qr,
             dark_image=qr,
             size=(200, 200)
         )
 
-        self.qr_label.configure(image=img, text="")
-        self.qr_label.image = img  # prevent garbage collection
-
-
+        self.qr_frame.label.configure(image=img, text="")
+        self.qr_frame.label.image = img  # prevent garbage collection
     #endregion
-
 
 class PasswordList(customTk.CTkScrollableFrame):
     def __init__(self, master, on_select=None, **kwargs):
@@ -289,17 +280,29 @@ class PasswordList(customTk.CTkScrollableFrame):
                 return i
         return None
 
+class QRCodeFrame(customTk.CTkFrame):
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
 
+        # prevent frame from resizing
+        self.grid_propagate(False)
 
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
-
+        self.label = customTk.CTkLabel(self, text="QR Code")
+        self.label.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
 if __name__ == '__main__':
+    customtkinter.set_default_color_theme(
+        r"C:\Users\cdove\PycharmProjects\Michels-GetServiceTagPassword\newGUI\blue.json")
     app = App()
     print("Today's Date: ", date.today())
     desktop = os.path.join(os.environ["USERPROFILE"], "OneDrive - Michels Corporation", "Desktop")
     file_path = os.path.join(desktop, "LAPSHistory.txt")
     print("File path: ", file_path)
     app.load_history()
+    app.title("Get LAPS History")
+    app.iconbitmap('michels_icon.ico')
 
     app.mainloop()
