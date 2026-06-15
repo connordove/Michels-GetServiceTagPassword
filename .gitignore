@@ -8,3 +8,6 @@ wheels/
 
 # Virtual environments
 .venv
+/key.key
+/main-test.py
+/password_manager.log
