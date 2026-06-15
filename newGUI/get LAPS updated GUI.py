@@ -121,7 +121,7 @@ class App(customTk.CTk):
 
         try:
             with open(file_path, "a", encoding="utf-8") as f:
-                f.write(f"{service_number},{password}\n")
+                f.write(f"{service_number}, {password}\n")
         except Exception as e:
             print("File write error: ", e)
 
@@ -190,8 +190,9 @@ class App(customTk.CTk):
             if self.password_frame.items:
                 last_text = self.password_frame.items[-1][0]
 
-                parts = last_text.split(",", 1)
+                parts = last_text.split(", ", 1)
                 password = parts[1] if len(parts) > 1 else parts[0]
+                password = password.split("  |")[0]
 
                 self.create_qr_code(password)
             else:
@@ -257,9 +258,10 @@ class PasswordList(customTk.CTkScrollableFrame):
 
         if self.on_select and selected_text:
             # Split "SN,password"
-            parts = selected_text.split(",", 1)
+            parts = selected_text.split(", ", 1)
+            password_part = parts[1] if len(parts) > 1 else parts[0]
 
-            password = parts[1] if len(parts) > 1 else parts[0]
+            password = password_part.split("  |")[0]
 
             self.on_select(password)
 
