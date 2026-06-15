@@ -10,7 +10,6 @@ import customtkinter as customTk
 import qrcode
 from customtkinter import CTkImage
 
-
 class App(customTk.CTk):
     def __init__(self):
         super().__init__()
@@ -48,17 +47,17 @@ class App(customTk.CTk):
 
         # --- Layout ---
         self.sn_label.grid(row=0, column=0, padx=20, pady=15)
-        self.sn_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.sn_entry.grid(row=0, column=1, padx=0, pady=5)
         self.submit_button.grid(row=0, column=2, padx=15, pady=5)
-        self.password_label.grid(row=2, column=0, padx=30, pady=10, columnspan=2, sticky="w")
+        #self.password_label.grid(row=2, column=0, padx=30, pady=10, columnspan=2, sticky="w")
         self.password_frame.grid(row=3, column=0, columnspan=7, rowspan=4,padx=20, pady=20)
         self.qr_label.grid(row=3, column=7, columnspan=4, sticky="n")
         self.qr_frame.grid(row=3, column=7, rowspan=2, padx=5, pady=20, sticky="nsew")
-        self.delete_history_button.grid(row=5, column=7, padx=10, pady=20, sticky="n")
-        self.delete_selected_button.grid(row=5, column=7, padx=10, pady=20, sticky = "s")
+        self.delete_selected_button.grid(row=5, column=7, padx=10, pady=20, sticky = "n")
+        self.delete_history_button.grid(row=5, column=7, padx=10, pady=20, sticky="s")
+
 
     #region defs
-
     def submit_service_tag(self, event=None):
         service_number = self.sn_entry.get().upper()
         self.focus()    # changes the focus to main window, removes blinking cursor
@@ -104,14 +103,14 @@ class App(customTk.CTk):
         if password_match:
             password = password_match.group(1)
             if expired:
-                password = password_match.group(1) + f"   |{expired_string}|"
+                password = password_match.group(1) + f"  |{expired_date}|"
         else:
             password = "NO PASSWORD FOUND"
 
         print("POWERSHELL DONE")
 
         # create QR Code
-        self.create_qr_code(f"{password}")
+        self.create_qr_code(f"{password_match.group(1)}")
 
         self.password_label.configure(text="SN, Password")
 
@@ -200,7 +199,6 @@ class App(customTk.CTk):
         except Exception as e:
             print("Error deleting line: ", e)
 
-
     def create_qr_code(self, data):
         qr = qrcode.make(data)
         qr = qr.resize((200, 200))
@@ -227,7 +225,7 @@ class PasswordList(customTk.CTkScrollableFrame):
             self,
             text=text,
             anchor="w",
-            font=("default", 25, "bold"),
+            font=("Consolas", 25, "bold"),
             height=60
         )
         btn.configure(command=lambda b=btn: self.select_item(b))
@@ -241,7 +239,7 @@ class PasswordList(customTk.CTkScrollableFrame):
 
         for t, btn in self.items:
             if btn == selected_btn:
-                btn.configure(fg_color="red")  # selected
+                btn.configure(fg_color="#b91c1c")  # selected
             else:
                 btn.configure(fg_color=("gray75", "gray25"))
 
@@ -290,7 +288,7 @@ class QRCodeFrame(customTk.CTkFrame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        self.label = customTk.CTkLabel(self, text="QR Code")
+        self.label = customTk.CTkLabel(self, text="QR Code Will Appear Here", font=('Roboto', 16))
         self.label.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
 
 if __name__ == '__main__':
