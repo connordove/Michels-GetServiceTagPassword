@@ -1,7 +1,7 @@
 # Hello! Welcome to my first Python program :)
 
 ## Please download [`Get LAPS Updated GUI.exe`](https://github.com/connordove/Michels-GetServiceTagPassword/blob/main/Get%20LAPS%20Updated%20GUI.exe)
-## Or [Get LAPS Old GUI.exe](https://github.com/connordove/Michels-GetServiceTagPassword/blob/main/Get%20LAPS%20Old%20GUI.exe)
+## Or [`Get LAPS Old GUI.exe`](https://github.com/connordove/Michels-GetServiceTagPassword/blob/main/Get%20LAPS%20Old%20GUI.exe)
 
 ### Steps to run:
 1. Download `Get LAPS.exe`. You can view the programs code within the `main.pyw`.
