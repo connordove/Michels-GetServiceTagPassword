@@ -14,6 +14,7 @@ root = tk.Tk()
 root.title("Password Manager")
 root.iconbitmap('michels_icon.ico')
 
+
 # setting the windows size
 root.geometry("650x525")
 
@@ -87,7 +88,6 @@ def run_powershell(st):
     # Refresh history safely
     root.after(0, load_history)
 
-
 # defining a function that will
 # get the name and password and
 # print them on the screen
@@ -106,7 +106,6 @@ def submit(event=None):
     threading.Thread(target=run_powershell, args=(st,), daemon=True).start()
 
     service_tag.set("")
-
 
 # defining a function that will
 # load name and passwords from
@@ -256,7 +255,7 @@ scrollbar.grid(row=5, column=3, sticky='ns')
 qr_title_label.grid(row=6, column=0)
 qr_label.grid(row=7, column=0, padx=10, pady=10)
 
-img_file = Image.open(resource_path("Powercat.png"))
+img_file = Image.open(resource_path("stuff/Powercat.png"))
 img_file = img_file.resize((180, 150))
 
 tk_image = ImageTk.PhotoImage(img_file)
