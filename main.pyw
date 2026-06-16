@@ -254,7 +254,7 @@ scrollbar.grid(row=5, column=3, sticky='ns')
 qr_title_label.grid(row=6, column=0)
 qr_label.grid(row=7, column=0, padx=10, pady=10)
 
-img_file = Image.open(resource_path("Powercat.png"))
+img_file = Image.open(resource_path("stuff/Powercat.png"))
 img_file = img_file.resize((180, 150))
 
 tk_image = ImageTk.PhotoImage(img_file)
