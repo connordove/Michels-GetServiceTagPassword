@@ -12,11 +12,35 @@ import qrcode
 from PIL import Image, ImageTk
 from customtkinter import CTkImage
 
+
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except AttributeError:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+
+customtkinter.set_default_color_theme(
+    resource_path("newGUI/michels_theme.json")
+)
+
+
 class App(customTk.CTk):
     def __init__(self):
         super().__init__()
         self.geometry("900x580")
         self.title("My GUI")
+        self.icon_path = (resource_path('newGUI/michels_icon.ico'))
+        try:
+            self.iconbitmap(self.icon_path)
+        except Exception as e:
+            print("iconbitmap failed, falling back: ", e)
+
+            icon=ImageTk.PhotoImage(Image.open(self.icon_path))
+            self.icon = icon
+            self.iconphoto(False, self.icon)
 
         # --- Frame ---
 
@@ -60,17 +84,17 @@ class App(customTk.CTk):
         self.sn_entry.bind("<Return>", self.submit_service_tag)
 
         # --- Image ---
-        self.image_file = customtkinter.CTkImage(light_image=Image.open(self.resource_path("newGUI\\MichelsWeDoThat.png")),
-                                            dark_image=Image.open(self.resource_path("newGUI\\MichelsWeDoThat.png")),
+        self.image_file = customtkinter.CTkImage(light_image=Image.open(resource_path("newGUI\\MichelsWeDoThat.png")),
+                                            dark_image=Image.open(resource_path("newGUI\\MichelsWeDoThat.png")),
                                             size=(850, 50))
         self.michels_label = customTk.CTkLabel(self, text="", image=self.image_file)
         self.m_click_count = 0
         self.michels_label.bind("<Button-1>", lambda e: self.click(e, "Michels"))
 
         # --- GIF ---
-        self.gif1 = CTkGif(self, "newGUI\\djCat.gif", size=(600,400))
-        self.gif2 = CTkGif(self, "newGUI\\HappyCat.gif", size=(100, 100))
-        self.gif3 = CTkGif(self, "newGUI\\JackHammer.gif", size=(100, 100))
+        self.gif1 = CTkGif(self, resource_path("newGUI\\djCat.gif"), size=(600,400))
+        self.gif2 = CTkGif(self, resource_path("newGUI\\HappyCat.gif"), size=(100, 100))
+        self.gif3 = CTkGif(self, resource_path("newGUI\\JackHammer.gif"), size=(100, 100))
 
 
         # --- Layout ---
@@ -264,14 +288,6 @@ class App(customTk.CTk):
         self.qr_frame.label.configure(image=img, text="")
         self.qr_frame.label.image = img  # prevent garbage collection
 
-    def resource_path(self, relative_path):
-        try:
-            base_path = sys._MEIPASS
-        except AttributeError:
-            base_path = os.path.abspath(".")
-
-        return os.path.join(base_path, relative_path)
-
     def surprise(self, name):
         if name == "Michels":
 
@@ -449,8 +465,6 @@ class CTkGif(customTk.CTkLabel):
         self.after(delay, self._animate)
 
 if __name__ == '__main__':
-    customtkinter.set_default_color_theme(
-        r"C:\Users\cdove\PycharmProjects\Michels-GetServiceTagPassword\newGUI\blue.json")
     app = App()
     print("Today's Date: ", date.today())
     desktop = os.path.join(os.environ["USERPROFILE"], "OneDrive - Michels Corporation", "Desktop")
@@ -458,6 +472,5 @@ if __name__ == '__main__':
     print("File path: ", file_path)
     app.load_history()
     app.title("Get LAPS History")
-    app.iconbitmap('michels_icon.ico')
 
     app.mainloop()
