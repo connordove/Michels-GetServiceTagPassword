@@ -30,18 +30,29 @@ class App(customTk.CTk):
         self.qr_frame = QRCodeFrame (master=self,
                                      width=200,
                                      height=200,
-                                     fg_color="transparent")
+                                     fg_color="#2b2b2b",
+                                     border_color="#fff",
+                                     border_width=2
+
+                                     )
+
 
         # --- Button ---
         self.debug_btn = customTk.CTkButton(self, text="DEBUG")
         self.submit_button = customTk.CTkButton(self, command=self.submit_service_tag, text="Submit")
         self.delete_history_button = customTk.CTkButton(self, command=self.delete_history, text="Delete History")
         self.delete_selected_button = customTk.CTkButton(self, command=self.delete_selected, text="Delete Selected")
+        self.reset_button = customTk.CTkButton(self, text="Remove GIFs",
+                                               command=self.reset_function,
+                                               fg_color="#deb10d",
+                                               hover_color="#f0c93e",
+                                               text_color="black")
 
         # --- Label ---
         self.sn_label = customTk.CTkLabel(self, text="Service Number", font=('default', 22, "bold"))
         self.password_label = customTk.CTkLabel(self, text="Password will appear below", font=('default', 22, "bold"), anchor="w")
         self.qr_label = customTk.CTkLabel(self, text="")
+        self.debug_label = customTk.CTkLabel(self, text="", font=('default', 16, "bold"), text_color="black")
 
 
         # --- Entry ---
@@ -53,10 +64,14 @@ class App(customTk.CTk):
                                             dark_image=Image.open(self.resource_path("newGUI\\MichelsWeDoThat.png")),
                                             size=(850, 50))
         self.michels_label = customTk.CTkLabel(self, text="", image=self.image_file)
+        self.m_click_count = 0
+        self.michels_label.bind("<Button-1>", lambda e: self.click(e, "Michels"))
 
         # --- GIF ---
         self.gif1 = CTkGif(self, "newGUI\\djCat.gif", size=(600,400))
         self.gif2 = CTkGif(self, "newGUI\\HappyCat.gif", size=(100, 100))
+        self.gif3 = CTkGif(self, "newGUI\\JackHammer.gif", size=(100, 100))
+
 
         # --- Layout ---
         self.sn_label.grid(row=0, column=0, padx=20, pady=15)
@@ -64,13 +79,22 @@ class App(customTk.CTk):
         self.submit_button.grid(row=0, column=2, padx=15, pady=5)
         #self.password_label.grid(row=2, column=0, padx=30, pady=10, columnspan=2, sticky="w")
         self.password_frame.grid(row=3, column=0, columnspan=7, rowspan=4,padx=20, pady=20)
-        self.qr_label.grid(row=3, column=7, columnspan=4, sticky="n")
+        #self.qr_label.grid(row=3, column=7, columnspan=4, sticky="n")
         self.qr_frame.grid(row=3, column=7, rowspan=2, padx=5, pady=20, sticky="nsew")
         self.delete_selected_button.grid(row=5, column=7, padx=10, pady=20, sticky = "n")
         self.delete_history_button.grid(row=5, column=7, padx=10, pady=20, sticky="s")
         self.michels_label.grid(row=7, column=0, padx=20, columnspan=10, sticky="w")
-        self.gif1.grid(row=0, column=0, columnspan=10, rowspan=10)
-        self.gif2.grid(row=0, column=0)
+
+    def click(self, event, source):
+        x,y = event.x, event.y
+        #print(f"Clicked at: {x}, {y}")
+        #print(source)
+        if source == "Michels":
+            if 5 < x <= 54 and 2 < y <= 46:
+                self.m_click_count += 1
+                #print(self.m_click_count)
+                if self.m_click_count >= 10:
+                    self.surprise("Michels")
 
 
 
@@ -79,11 +103,19 @@ class App(customTk.CTk):
         service_number = self.sn_entry.get().upper()
         self.focus()    # changes the focus to main window, removes blinking cursor
         if service_number == "DOVE":
-            self.surprise()
+            self.surprise("Dove")
+            self.sn_entry.delete(0, "end")
             return
+        elif service_number == "5QFT9Y3":
+            self.sn_entry.delete(0, "end")
+            self.run_powershell(service_number)
+            self.create_qr_code("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+            self.debug_label.place(x=660, y=280)
+            self.debug_label.configure(text="Oh! You found an easter egg!")
+            self.after(15000, self.reset_function)
 
         # runs if service number is not blank
-        if service_number != "":
+        elif service_number != "":
             print("SERVICE NUMBER: " + service_number)
             self.password_label.configure(text="Running...")
             self.run_powershell(service_number)
@@ -240,9 +272,26 @@ class App(customTk.CTk):
 
         return os.path.join(base_path, relative_path)
 
-    def surprise(self):
+    def surprise(self, name):
+        if name == "Michels":
+
+            self.gif1.place(x=150, y=80)
+        else:
+            self.gif2.place(x=20, y=20)
+            self.gif3.place(x=750, y=420)
         self.gif1.start()
         self.gif2.start()
+        self.gif3.start()
+        self.reset_button.place(x=750, y=15)
+
+    def reset_function(self):
+        self.gif1.place_forget()
+        self.gif2.place_forget()
+        self.gif3.place_forget()
+        self.debug_label.place_forget()
+
+        self.m_click_count = 0
+        self.reset_button.place_forget()
 
 
     #endregion
@@ -338,6 +387,8 @@ class CTkGif(customTk.CTkLabel):
         """
         super().__init__(master, text="")
 
+
+
         self.path = path
         self.size = size
         self.loop = loop
@@ -397,7 +448,6 @@ class CTkGif(customTk.CTkLabel):
 
         self.after(delay, self._animate)
 
-
 if __name__ == '__main__':
     customtkinter.set_default_color_theme(
         r"C:\Users\cdove\PycharmProjects\Michels-GetServiceTagPassword\newGUI\blue.json")
@@ -409,6 +459,5 @@ if __name__ == '__main__':
     app.load_history()
     app.title("Get LAPS History")
     app.iconbitmap('michels_icon.ico')
-
 
     app.mainloop()
