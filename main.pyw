@@ -6,7 +6,7 @@ import threading
 import ctypes
 import qrcode
 import tkinter as tk
-from tkinter import messagebox, Label
+from tkinter import messagebox, Label, ttk
 from datetime import date
 from PIL import Image, ImageTk
 
@@ -17,6 +17,7 @@ root.iconbitmap('michels_icon.ico')
 
 # setting the windows size
 root.geometry("650x525")
+
 
 today = date.today()
 
@@ -183,7 +184,7 @@ def on_select(event):
         # Get selected line
         selected_index = history_box.curselection()[0]
         p = history_box.get(selected_index).split(", ")
-        st = p[1].split(" |")
+        st = p[1].split("  |")
         selected_text = st[0]
 
         print("Selected:", selected_text)
