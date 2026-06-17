@@ -3,6 +3,8 @@ import os
 import re
 import subprocess
 import sys
+import threading
+import time
 import tkinter
 from tkinter import messagebox
 from datetime import date
@@ -11,7 +13,11 @@ import customtkinter as customTk
 import qrcode
 from PIL import Image, ImageTk
 from customtkinter import CTkImage
-
+from selenium import webdriver
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.select import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
 
 def resource_path(relative_path):
     try:
@@ -21,11 +27,9 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-
 customtkinter.set_default_color_theme(
     resource_path("newGUI/michels_theme.json")
 )
-
 
 class App(customTk.CTk):
     def __init__(self):
@@ -71,6 +75,7 @@ class App(customTk.CTk):
                                                fg_color="#deb10d",
                                                hover_color="#f0c93e",
                                                text_color="black")
+        self.service_now_button = customTk.CTkButton(self, text="ServiceNow", command=self.password_frame.run_servicenow)
 
         # --- Label ---
         self.sn_label = customTk.CTkLabel(self, text="Service Number", font=('default', 22, "bold"))
@@ -101,6 +106,7 @@ class App(customTk.CTk):
         self.sn_label.grid(row=0, column=0, padx=20, pady=15)
         self.sn_entry.grid(row=0, column=1, padx=0, pady=5)
         self.submit_button.grid(row=0, column=2, padx=15, pady=5)
+        self.service_now_button.grid(row=0, column=3, sticky="e")
         #self.password_label.grid(row=2, column=0, padx=30, pady=10, columnspan=2, sticky="w")
         self.password_frame.grid(row=3, column=0, columnspan=7, rowspan=4,padx=20, pady=20)
         #self.qr_label.grid(row=3, column=7, columnspan=4, sticky="n")
@@ -109,6 +115,7 @@ class App(customTk.CTk):
         self.delete_history_button.grid(row=5, column=7, padx=10, pady=20, sticky="s")
         self.michels_label.grid(row=7, column=0, padx=20, columnspan=10, sticky="w")
 
+    #region defs
     def click(self, event, source):
         x,y = event.x, event.y
         #print(f"Clicked at: {x}, {y}")
@@ -120,9 +127,6 @@ class App(customTk.CTk):
                 if self.m_click_count >= 10:
                     self.surprise("Michels")
 
-
-
-    #region defs
     def submit_service_tag(self, event=None):
         service_number = self.sn_entry.get().upper()
         self.focus()    # changes the focus to main window, removes blinking cursor
@@ -309,6 +313,91 @@ class App(customTk.CTk):
         self.m_click_count = 0
         self.reset_button.place_forget()
 
+    def service_now(self, service_number):
+        threading.Thread(
+            target=self._service_now_task,
+            args=(service_number,),
+            daemon=True
+        ).start()
+
+    def _service_now_task(self, service_number):
+        try:
+            driver = webdriver.Chrome()
+            #self.after(2000, self.iconify)
+            wait = WebDriverWait(driver, 10)
+
+            driver.get(f"https://itsupport.michels.us/now/nav/ui/classic/params/target/alm_hardware.do%3Fsysparm_query=asset_tag%3D{service_number}%26sysparm_view=MyCompanyAssets")
+            time.sleep(3)
+            login = self.topmost_messagebox(
+                messagebox.askyesno,
+                "Login",
+                message="Confirm ServiceNow Login",
+                icon="question"
+            )
+
+            if login:
+                try:
+                    macroponent = driver.find_element(By.CSS_SELECTOR,"macroponent-f51912f4c700201072b211d4d8c26010")
+                    root1 = macroponent.shadow_root
+                    print("Found macro root!")
+
+                    iframe = root1.find_element(By.ID, "gsft_main")
+                    print("Found iframe!")
+                    driver.switch_to.frame(iframe)
+                    print("Entered iframe")
+
+                    state_element = driver.find_element(By.ID, "alm_hardware.install_status")
+                    print("Fount state_element!")
+
+                    substate_element = driver.find_element(By.ID, "alm_hardware.substatus")
+                    print("Fount substate_element!")
+
+                    stockroom_element = driver.find_element(By.ID, "sys_display.alm_hardware.stockroom")
+                    print("Fount stockroom_element!")
+
+                    driver.execute_script("arguments[0].style.border='3px solid red'", state_element)
+                    driver.execute_script("arguments[0].style.border='3px solid green'", substate_element)
+                    driver.execute_script("arguments[0].style.border='3px solid blue'", stockroom_element)
+
+                    select = Select(state_element)
+                    select.select_by_value("6")
+
+                    select = Select(substate_element)
+                    select.select_by_value("available")
+
+                    if stockroom_element.get_attribute("value") != "Brownsville Warehouse":
+                        stockroom_element.send_keys("Brownsville Warehouse")
+                        time.sleep(1)
+
+                    update_button_element = driver.find_element(By.ID, "sysverb_update")
+                    driver.execute_script("arguments[0].style.border='3px solid red'", update_button_element)
+
+                    correct_info = self.topmost_messagebox(
+                                                        messagebox.askyesno,
+                                                        "Confirm Info",
+                                                        "Confirm the input info is correct",
+                                                        icon="question"
+                                                        )
+                    if correct_info:
+                        update_button_element.click()
+
+                except Exception as e:
+                    messagebox.showerror("Error", str(e))
+
+        finally:
+            driver.quit()
+            #self.deiconify
+
+    def topmost_messagebox(self, func, *args, **kwargs):
+        temp = customTk.CTkToplevel()
+        temp.withdraw()
+        temp.attributes('-topmost', True) # force on top
+        temp.lift()
+        result = func(*args, parent=temp, **kwargs)
+
+        temp.destroy()
+        return result
+
 
     #endregion
 
@@ -377,6 +466,22 @@ class PasswordList(customTk.CTkScrollableFrame):
             if btn == self.selected:
                 return i
         return None
+
+    def run_servicenow(self):
+        if self.selected is None:
+            messagebox.showerror("Error", "Please select a Service Number.")
+            return
+        selected_text = next((t for t, b in self.items if b == self.selected), None)
+        if not selected_text:
+            messagebox.showerror("Error", "Could not find selected item.")
+            return
+
+        parts = selected_text.split(",", 1)
+        service_number = parts[0]
+        print("Running Service Now... SN:", service_number)
+        app.service_now(service_number)
+
+
 
 class QRCodeFrame(customTk.CTkFrame):
     def __init__(self, master, **kwargs):
