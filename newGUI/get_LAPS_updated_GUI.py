@@ -12,12 +12,14 @@ import customtkinter
 import customtkinter as customTk
 import qrcode
 from PIL import Image, ImageTk
-from customtkinter import CTkImage
+from keyring import set_keyring
 from selenium import webdriver
-from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
+from unicodedata import unidata_version
+
 
 def resource_path(relative_path):
     try:
@@ -34,7 +36,7 @@ customtkinter.set_default_color_theme(
 class App(customTk.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("900x580")
+        self.geometry("920x630")
         self.title("My GUI")
         self.icon_path = (resource_path('newGUI/michels_icon.ico'))
         try:
@@ -45,9 +47,32 @@ class App(customTk.CTk):
             icon=ImageTk.PhotoImage(Image.open(self.icon_path))
             self.icon = icon
             self.iconphoto(False, self.icon)
+        #region grid
+        self.grid_columnconfigure(0, weight=3)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=1)
+        self.grid_columnconfigure(3, weight=1)
+        self.grid_columnconfigure(4, weight=1)
+        self.grid_columnconfigure(5, weight=1)
+        self.grid_columnconfigure(6, weight=1)
+        self.grid_columnconfigure(7, weight=1)
+        self.grid_columnconfigure(8, weight=1)
+        self.grid_columnconfigure(9, weight=1)
+        self.grid_columnconfigure(10, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(3, weight=1)
+        self.grid_rowconfigure(4, weight=1)
+        self.grid_rowconfigure(5, weight=2)
+        self.grid_rowconfigure(6, weight=1)
+        self.grid_rowconfigure(7, weight=1)
+        self.grid_rowconfigure(8, weight=1)
+        self.grid_rowconfigure(9, weight=1)
+        self.grid_rowconfigure(10, weight=1)
+        #endregion
 
         # --- Frame ---
-
         self.password_frame = PasswordList(
             master=self,
             on_select=self.create_qr_code,
@@ -64,29 +89,38 @@ class App(customTk.CTk):
 
                                      )
 
+        self.menu_frame = MenuFrame(master=self,
+                                    submit_callback=self.submit_service_tag,
+                                    submit_service_tag_callback=self.submit_service_tag,
+                                    run_servicenow_callback=self.password_frame.run_servicenow,
+                                    width=680, height=60)
+
+        self.delete_buttons_frame = DeleteButtonsFrame(master=self,
+                                                       delete_history_callback=self.delete_history,
+                                                       delete_selected_callback=self.delete_selected,
+                                                       width=100,
+                                                       height=100)
+
 
         # --- Button ---
         self.debug_btn = customTk.CTkButton(self, text="DEBUG")
-        self.submit_button = customTk.CTkButton(self, command=self.submit_service_tag, text="Submit")
-        self.delete_history_button = customTk.CTkButton(self, command=self.delete_history, text="Delete History")
-        self.delete_selected_button = customTk.CTkButton(self, command=self.delete_selected, text="Delete Selected")
         self.reset_button = customTk.CTkButton(self, text="Remove GIFs",
                                                command=self.reset_function,
                                                fg_color="#deb10d",
                                                hover_color="#f0c93e",
                                                text_color="black")
-        self.service_now_button = customTk.CTkButton(self, text="ServiceNow", command=self.password_frame.run_servicenow)
+
+        self.browser_buttons = customTk.CTkSegmentedButton(self, values=["Edge", "Chrome"], command=self.browser_button_change)
+        self.browser_buttons.set("Edge")
+        self.browser_buttons.configure(selected_color="#0078D7", selected_hover_color="#0087F5")
 
         # --- Label ---
-        self.sn_label = customTk.CTkLabel(self, text="Service Number", font=('default', 22, "bold"))
         self.password_label = customTk.CTkLabel(self, text="Password will appear below", font=('default', 22, "bold"), anchor="w")
         self.qr_label = customTk.CTkLabel(self, text="")
         self.debug_label = customTk.CTkLabel(self, text="", font=('default', 16, "bold"), text_color="black")
 
 
         # --- Entry ---
-        self.sn_entry = customTk.CTkEntry(self, placeholder_text="Enter SN Here", font=('default', 18, "bold"))
-        self.sn_entry.bind("<Return>", self.submit_service_tag)
 
         # --- Image ---
         self.image_file = customtkinter.CTkImage(light_image=Image.open(resource_path("newGUI\\MichelsWeDoThat.png")),
@@ -101,21 +135,28 @@ class App(customTk.CTk):
         self.gif2 = CTkGif(self, resource_path("newGUI\\HappyCat.gif"), size=(100, 100))
         self.gif3 = CTkGif(self, resource_path("newGUI\\JackHammer.gif"), size=(100, 100))
 
-
+        #region Layout
         # --- Layout ---
-        self.sn_label.grid(row=0, column=0, padx=20, pady=15)
-        self.sn_entry.grid(row=0, column=1, padx=0, pady=5)
-        self.submit_button.grid(row=0, column=2, padx=15, pady=5)
-        self.service_now_button.grid(row=0, column=3, sticky="e")
-        #self.password_label.grid(row=2, column=0, padx=30, pady=10, columnspan=2, sticky="w")
-        self.password_frame.grid(row=3, column=0, columnspan=7, rowspan=4,padx=20, pady=20)
+        self.menu_frame.grid(row=0, column=0, rowspan=1, columnspan=8, padx=20, pady=10, sticky="w")
+        self.browser_buttons.grid(row=1, column=6, sticky="e")
+        #self.password_label.grid(row=1, column=0, padx=30, pady=10, columnspan=2, sticky="w")
+        self.password_frame.grid(row=3, column=0, columnspan=7, rowspan=4,padx=20, pady=20, sticky="nsew")
         #self.qr_label.grid(row=3, column=7, columnspan=4, sticky="n")
         self.qr_frame.grid(row=3, column=7, rowspan=2, padx=5, pady=20, sticky="nsew")
-        self.delete_selected_button.grid(row=5, column=7, padx=10, pady=20, sticky = "n")
-        self.delete_history_button.grid(row=5, column=7, padx=10, pady=20, sticky="s")
-        self.michels_label.grid(row=7, column=0, padx=20, columnspan=10, sticky="w")
+        self.delete_buttons_frame.grid(row=5, column=7, rowspan=2, padx=5, pady=20, sticky="nsew")
+
+        self.michels_label.grid(row=7, column=0, padx=20, pady=10, columnspan=10, sticky="w")
+
+        #endregion
 
     #region defs
+    def browser_button_change(self, value):
+        browser = value
+        if browser == "Edge":
+            self.browser_buttons.configure(selected_color="#0078D7", selected_hover_color="#0087F5")
+        else:
+            self.browser_buttons.configure(selected_color="#309C4D", selected_hover_color="#35AC54")
+
     def click(self, event, source):
         x,y = event.x, event.y
         #print(f"Clicked at: {x}, {y}")
@@ -128,14 +169,14 @@ class App(customTk.CTk):
                     self.surprise("Michels")
 
     def submit_service_tag(self, event=None):
-        service_number = self.sn_entry.get().upper()
+        service_number = self.menu_frame.sn_entry.get().upper()
         self.focus()    # changes the focus to main window, removes blinking cursor
         if service_number == "DOVE":
             self.surprise("Dove")
-            self.sn_entry.delete(0, "end")
+            self.menu_frame.sn_entry.delete(0, "end")
             return
         elif service_number == "5QFT9Y3":
-            self.sn_entry.delete(0, "end")
+            self.menu_frame.sn_entry.delete(0, "end")
             self.run_powershell(service_number)
             self.create_qr_code("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
             self.debug_label.place(x=660, y=280)
@@ -150,10 +191,13 @@ class App(customTk.CTk):
 
         # runs if service number is blank
         elif service_number == "":
-            self.sn_entry.delete(0, "end")
+            self.menu_frame.sn_entry.delete(0, "end")
             self.password_label.configure(text="Service Number cannot be blank")
+            self.topmost_messagebox(messagebox.showerror,
+                                    "Error",
+                                    "Service Number Cannot Be Blank")
 
-        self.sn_entry.delete(0, "end")
+        self.menu_frame.sn_entry.delete(0, "end")
 
         self.load_history()
 
@@ -187,6 +231,9 @@ class App(customTk.CTk):
                 password = password_match.group(1) + f"  |{expired_date}|"
         else:
             password = "NO PASSWORD FOUND"
+            self.topmost_messagebox(messagebox.showerror,
+                                    "Error",
+                                    f"Error Finding Password for {service_number}")
 
         print("POWERSHELL DONE")
 
@@ -298,11 +345,11 @@ class App(customTk.CTk):
             self.gif1.place(x=150, y=80)
         else:
             self.gif2.place(x=20, y=20)
-            self.gif3.place(x=750, y=420)
+            self.gif3.place(x=750, y=445)
         self.gif1.start()
         self.gif2.start()
         self.gif3.start()
-        self.reset_button.place(x=750, y=15)
+        self.reset_button.place(x=740, y=25)
 
     def reset_function(self):
         self.gif1.place_forget()
@@ -314,20 +361,36 @@ class App(customTk.CTk):
         self.reset_button.place_forget()
 
     def service_now(self, service_number):
-        threading.Thread(
+        self.after(0, lambda: self._service_now_task(service_number))
+        """threading.Thread(
             target=self._service_now_task,
             args=(service_number,),
             daemon=True
         ).start()
+        """
 
     def _service_now_task(self, service_number):
+        print("ServiceNow thread started")
+        print("Browser:", self.browser_buttons.get())
+        driver = None
         try:
-            driver = webdriver.Chrome()
+            if self.browser_buttons.get() == "Edge":
+                driver_path = resource_path("newGUI\\msedgedriver.exe")
+                service = Service(driver_path)
+                driver = webdriver.Edge(service=service)
+                print("Edge started")
+            elif self.browser_buttons.get() == "Chrome":
+                driver_path = resource_path("newGUI\\chromedriver.exe")
+                service = Service(driver_path)
+                driver = webdriver.Chrome(service=service)
+                print("Chrome started")
+
             #self.after(2000, self.iconify)
             wait = WebDriverWait(driver, 10)
 
             driver.get(f"https://itsupport.michels.us/now/nav/ui/classic/params/target/alm_hardware.do%3Fsysparm_query=asset_tag%3D{service_number}%26sysparm_view=MyCompanyAssets")
             time.sleep(3)
+            #messagebox.askyesno("Hey", "Sup")
             login = self.topmost_messagebox(
                 messagebox.askyesno,
                 "Login",
@@ -346,6 +409,9 @@ class App(customTk.CTk):
                     driver.switch_to.frame(iframe)
                     print("Entered iframe")
 
+                    asset_tag_element = driver.find_element(By.ID, "sys_readonly.alm_hardware.asset_tag")
+                    print("Found asset_tag_element!")
+
                     state_element = driver.find_element(By.ID, "alm_hardware.install_status")
                     print("Fount state_element!")
 
@@ -355,9 +421,10 @@ class App(customTk.CTk):
                     stockroom_element = driver.find_element(By.ID, "sys_display.alm_hardware.stockroom")
                     print("Fount stockroom_element!")
 
+                    driver.execute_script("arguments[0].style.border='3px solid red'", asset_tag_element)
                     driver.execute_script("arguments[0].style.border='3px solid red'", state_element)
-                    driver.execute_script("arguments[0].style.border='3px solid green'", substate_element)
-                    driver.execute_script("arguments[0].style.border='3px solid blue'", stockroom_element)
+                    driver.execute_script("arguments[0].style.border='3px solid red'", substate_element)
+                    driver.execute_script("arguments[0].style.border='3px solid red'", stockroom_element)
 
                     select = Select(state_element)
                     select.select_by_value("6")
@@ -370,34 +437,48 @@ class App(customTk.CTk):
                         time.sleep(1)
 
                     update_button_element = driver.find_element(By.ID, "sysverb_update")
-                    driver.execute_script("arguments[0].style.border='3px solid red'", update_button_element)
+                    driver.execute_script("arguments[0].style.border='5px solid #512888'", update_button_element)
 
                     correct_info = self.topmost_messagebox(
                                                         messagebox.askyesno,
                                                         "Confirm Info",
-                                                        "Confirm the input info is correct",
+                                                        "Confirm the input info is correct:\nDoes info require modification?",
                                                         icon="question"
                                                         )
-                    if correct_info:
+                    if not correct_info:
                         update_button_element.click()
 
                 except Exception as e:
-                    messagebox.showerror("Error", str(e))
+                    messagebox.showerror("ServiceNow Error", str(e))
 
         finally:
-            driver.quit()
+            if driver:
+                driver.quit()
             #self.deiconify
 
+    # MADE WITH COPILOT
     def topmost_messagebox(self, func, *args, **kwargs):
         temp = customTk.CTkToplevel()
+
+        # Hide window visually
         temp.withdraw()
-        temp.attributes('-topmost', True) # force on top
-        temp.lift()
+
+        # Give it your icon
+        temp.iconbitmap(self.icon_path)
+
+        # IMPORTANT: remove window decorations entirely
+        temp.overrideredirect(True)
+
+        # Make only THIS invisible window topmost
+        temp.attributes('-topmost', True)
+
+        # Ensure it's created before dialog
+        temp.update()
+
         result = func(*args, parent=temp, **kwargs)
 
         temp.destroy()
         return result
-
 
     #endregion
 
@@ -481,8 +562,6 @@ class PasswordList(customTk.CTkScrollableFrame):
         print("Running Service Now... SN:", service_number)
         app.service_now(service_number)
 
-
-
 class QRCodeFrame(customTk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
@@ -507,8 +586,6 @@ class CTkGif(customTk.CTkLabel):
             loop (bool): loop animation
         """
         super().__init__(master, text="")
-
-
 
         self.path = path
         self.size = size
@@ -568,6 +645,41 @@ class CTkGif(customTk.CTkLabel):
                 return
 
         self.after(delay, self._animate)
+
+class MenuFrame(customTk.CTkFrame):
+    def __init__(self, master, submit_callback, submit_service_tag_callback, run_servicenow_callback, **kwargs):
+        super().__init__(master, **kwargs)
+
+        self.grid_propagate(False)
+
+        self.sn_label = customTk.CTkLabel(self, text="Service Number", font=('default', 22, "bold"))
+        self.submit_button = customTk.CTkButton(self, text="Submit", command=submit_callback)
+        self.sn_entry = customTk.CTkEntry(self, placeholder_text="Enter SN Here", font=('default', 18, "bold"))
+        self.sn_entry.bind("<Return>", submit_service_tag_callback)
+        self.service_now_button = customTk.CTkButton(self, text="ServiceNow",
+                                                     command=run_servicenow_callback)
+
+        self.sn_label.grid(row=0, column=0, padx=20, pady=15)
+        self.sn_entry.grid(row=0, column=1, padx=0, pady=5)
+        self.submit_button.grid(row=0, column=2, padx=15, pady=5)
+        self.service_now_button.grid(row=0, column=3, sticky="e")
+
+class DeleteButtonsFrame(customTk.CTkFrame):
+    def __init__(self, master, delete_history_callback, delete_selected_callback, **kwargs):
+        super().__init__(master, **kwargs)
+
+        self.grid_rowconfigure(0, weight=0)
+        self.grid_rowconfigure(1, weight=0)
+        self.grid_rowconfigure(2, weight=0)
+        self.grid_rowconfigure(3, weight=0)
+
+        self.grid_columnconfigure(0, weight=1)
+
+        self.delete_history_button = customTk.CTkButton(self, command=delete_history_callback, text="Delete History")
+        self.delete_selected_button = customTk.CTkButton(self, command=delete_selected_callback, text="Delete Selected")
+
+        self.delete_selected_button.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.delete_history_button.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
 
 if __name__ == '__main__':
     app = App()
