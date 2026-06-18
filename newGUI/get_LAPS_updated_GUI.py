@@ -545,7 +545,7 @@ class PasswordList(customTk.CTkScrollableFrame):
             anchor="w",
             font=("Consolas", 25, "bold"),
             height=60,
-            corner_radius=6
+            corner_radius=2
         )
         btn.configure(command=lambda b=btn: self.select_item(b))
 
@@ -787,8 +787,6 @@ class MenuFrame(customTk.CTkFrame):
         self.divider.grid(row=0, column=4, padx=15)
         self.browser_buttons.grid(row=0, column=5, padx=(0,20), pady=5)
 
-
-
 class DeleteButtonsFrame(customTk.CTkFrame):
     def __init__(self, master, delete_history_callback, delete_selected_callback, reset_button_callback, **kwargs):
         super().__init__(master, **kwargs)
@@ -809,7 +807,7 @@ class DeleteButtonsFrame(customTk.CTkFrame):
                                                text_color="black")
         self.temp_button = customTk.CTkButton(self, text="Temp", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
         #self.temp_button2 = customTk.CTkButton(self, text="Temp", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
-        self.fun_bar = customTk.CTkProgressBar(master=self, mode="indeterminate", progress_color="Green", indeterminate_speed=.3, width=30, corner_radius=12)
+        self.fun_bar = customTk.CTkProgressBar(master=self, mode="indeterminate", progress_color="#fdb916", indeterminate_speed=.3, width=30, corner_radius=12)
 
         self.delete_selected_button.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
         self.delete_history_button.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
