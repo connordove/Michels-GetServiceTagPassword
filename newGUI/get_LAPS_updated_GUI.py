@@ -3,23 +3,18 @@ import os
 import re
 import subprocess
 import sys
-import threading
 import time
 import tkinter
-from tkinter import messagebox
 from datetime import date
+from tkinter import messagebox
 import customtkinter
 import customtkinter as customTk
 import qrcode
 from PIL import Image, ImageTk
-from keyring import set_keyring
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.select import Select
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
-from unicodedata import unidata_version
-
+from selenium.webdriver.support.select import Select
 
 def resource_path(relative_path):
     try:
@@ -39,6 +34,12 @@ class App(customTk.CTk):
         self.geometry("920x630")
         self.title("My GUI")
         self.icon_path = (resource_path('newGUI/michels_icon.ico'))
+        self.resizable(False, False)
+
+        self.bind_all("<Up>", lambda e: self.password_frame.on_arrow_up(e))
+        self.bind_all("<Down>", lambda e: self.password_frame.on_arrow_down(e))
+        self.bind_all("<Delete>", self.handle_delete_key)
+        self.bind_all("<Button-1>", self.handle_click)
         try:
             self.iconbitmap(self.icon_path)
         except Exception as e:
@@ -99,21 +100,16 @@ class App(customTk.CTk):
         self.delete_buttons_frame = DeleteButtonsFrame(master=self,
                                                        delete_history_callback=self.delete_history,
                                                        delete_selected_callback=self.delete_selected,
+                                                       reset_button_callback=self.reset_function,
                                                        width=100,
                                                        height=100)
 
 
         # --- Button ---
         self.debug_btn = customTk.CTkButton(self, text="DEBUG")
-        self.reset_button = customTk.CTkButton(self, text="Remove GIFs",
-                                               command=self.reset_function,
-                                               fg_color="#deb10d",
-                                               hover_color="#f0c93e",
-                                               text_color="black")
 
 
         # --- Label ---
-        self.password_label = customTk.CTkLabel(self, text="Password will appear below", font=('default', 22, "bold"), anchor="w")
         self.qr_label = customTk.CTkLabel(self, text="")
         self.debug_label = customTk.CTkLabel(self, text="", font=('default', 16, "bold"), text_color="black")
 
@@ -136,7 +132,6 @@ class App(customTk.CTk):
         #region Layout
         # --- Layout ---
         self.menu_frame.grid(row=0, column=0, rowspan=1, columnspan=11, padx=20, pady=10, sticky="w")
-        #self.password_label.grid(row=1, column=0, padx=30, pady=10, columnspan=2, sticky="w")
         self.password_frame.grid(row=3, column=0, columnspan=7, rowspan=4,padx=20, pady=20, sticky="nsew")
         #self.qr_label.grid(row=3, column=7, columnspan=4, sticky="n")
         self.qr_frame.grid(row=3, column=7, rowspan=2, padx=5, pady=20, sticky="nsew")
@@ -167,7 +162,7 @@ class App(customTk.CTk):
 
     def submit_service_tag(self, event=None):
         service_number = self.menu_frame.sn_entry.get().upper()
-        self.focus()    # changes the focus to main window, removes blinking cursor
+        #self.focus()    # changes the focus to main window, removes blinking cursor
         if service_number == "DOVE":
             self.surprise("Dove")
             self.menu_frame.sn_entry.delete(0, "end")
@@ -175,27 +170,27 @@ class App(customTk.CTk):
         elif service_number == "5QFT9Y3":
             self.menu_frame.sn_entry.delete(0, "end")
             self.run_powershell(service_number)
-            self.create_qr_code("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
             self.debug_label.place(x=660, y=310)
             self.debug_label.configure(text="Oh! You found an easter egg!")
+            print("SECRET QR")
+            self.create_qr_code("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
             self.after(15000, self.reset_function)
+
+            return
 
         # runs if service number is not blank
         elif service_number != "":
             print("SERVICE NUMBER: " + service_number)
-            self.password_label.configure(text="Running...")
             self.run_powershell(service_number)
 
         # runs if service number is blank
         elif service_number == "":
             self.menu_frame.sn_entry.delete(0, "end")
-            self.password_label.configure(text="Service Number cannot be blank")
             self.topmost_messagebox(messagebox.showerror,
                                     "Error",
                                     "Service Number Cannot Be Blank")
 
         self.menu_frame.sn_entry.delete(0, "end")
-
         self.load_history()
 
     def run_powershell(self, service_number):
@@ -226,26 +221,27 @@ class App(customTk.CTk):
             password = password_match.group(1)
             if expired:
                 password = password_match.group(1) + f"  |{expired_date}|"
+            print("Password QR")
+            self.create_qr_code(f"{password_match.group(1)}")
+            print("POWERSHELL DONE")
         else:
             password = "NO PASSWORD FOUND"
             self.topmost_messagebox(messagebox.showerror,
                                     "Error",
                                     f"Error Finding Password for {service_number}")
+            print("POWERSHELL DONE NO PASSWORD FOUND")
 
-        print("POWERSHELL DONE")
+            return
+
 
         # create QR Code
-        self.create_qr_code(f"{password_match.group(1)}")
-
-        self.password_label.configure(text="SN, Password")
-
         try:
             with open(file_path, "a", encoding="utf-8") as f:
                 f.write(f"{service_number}, {password}\n")
         except Exception as e:
             print("File write error: ", e)
 
-        self.after(0, self.load_history)
+        self.load_history()
 
     def load_history(self):
         try:
@@ -258,6 +254,9 @@ class App(customTk.CTk):
 
             for line in recent:
                 self.password_frame.add_item(line.strip())
+
+
+            self.password_frame.select_last_item()
 
         except FileNotFoundError:
             print("File History not found")
@@ -281,6 +280,8 @@ class App(customTk.CTk):
                     # delete QR code
                     self.qr_frame.label.configure(image=None, text="")
                     self.qr_frame.label.image = None
+                    self.current_qr_image = None
+
                     print("File deleted and desktop refreshed successfully.")
                 else:
                     print("No history file found.")
@@ -317,8 +318,9 @@ class App(customTk.CTk):
                 self.create_qr_code(password)
             else:
                 # Clear QR if empty
-                self.qr_label.configure(image=None, text="")
-                self.qr_label.image = None
+                self.qr_frame.label.configure(image=None, text="")
+                self.qr_frame.label.image = None
+                self.current_qr_image = None
 
             print("Finished deleting selected")
         except Exception as e:
@@ -327,14 +329,14 @@ class App(customTk.CTk):
     def create_qr_code(self, data):
         qr = qrcode.make(data)
         qr = qr.resize((200, 200))
-        img = customTk.CTkImage(
+        self.current_qr_image = customTk.CTkImage(
             light_image=qr,
             dark_image=qr,
             size=(200, 200)
         )
 
-        self.qr_frame.label.configure(image=img, text="")
-        self.qr_frame.label.image = img  # prevent garbage collection
+        self.qr_frame.label.configure(image=self.current_qr_image, text="")
+        self.qr_frame.label.image = self.current_qr_image
 
     def surprise(self, name):
         if name == "Michels":
@@ -342,11 +344,11 @@ class App(customTk.CTk):
             self.gif1.place(x=150, y=80)
         else:
             self.gif2.place(x=20, y=20)
-            self.gif3.place(x=750, y=445)
+            self.gif3.place(x=540, y=470)
+        self.delete_buttons_frame.reset_button.grid(row=3, column=0, padx=10, pady=10, sticky="nsew")
         self.gif1.start()
         self.gif2.start()
         self.gif3.start()
-        self.reset_button.place(x=740, y=25)
 
     def reset_function(self):
         self.gif1.place_forget()
@@ -355,7 +357,7 @@ class App(customTk.CTk):
         self.debug_label.place_forget()
 
         self.m_click_count = 0
-        self.reset_button.place_forget()
+        self.delete_buttons_frame.reset_button.grid_forget()
 
     def service_now(self, service_number):
         self.after(0, lambda: self._service_now_task(service_number))
@@ -477,13 +479,27 @@ class App(customTk.CTk):
         temp.destroy()
         return result
 
+    def handle_delete_key(self, event=None):
+        focus = self.focus_get()
+
+        if focus and str(focus).startswith(str(self.menu_frame.sn_entry)):
+            print("Didn't delete, in Entry")
+            return
+
+        self.delete_selected()
+
+    def handle_click(self, event):
+        widget = event.widget
+
+        if not str(widget).startswith(str(self.menu_frame.sn_entry)):
+            self.focus()
     #endregion
 
 class PasswordList(customTk.CTkScrollableFrame):
     def __init__(self, master, on_select=None, **kwargs):
         super().__init__(master, **kwargs)
 
-        self.items = []
+        self.items = []  # [(text, button)] oldest -> newest
         self.selected = None
         self.on_select = on_select
 
@@ -498,55 +514,72 @@ class PasswordList(customTk.CTkScrollableFrame):
         )
         btn.configure(command=lambda b=btn: self.select_item(b))
 
-        self.items.insert(0, (text, btn))
+        # Store chronologically (oldest -> newest)
+        self.items.append((text, btn))
+
+        # Repack UI so newest appears at TOP
+        self._repack_buttons()
+
+    def _repack_buttons(self):
+        # Clear UI
         for _, b in self.items:
             b.pack_forget()
 
-        for _, b in self.items:
+        # Pack newest first (top of UI)
+        for _, b in reversed(self.items):
             b.pack(fill="x", padx=1, pady=1)
-
-        self.select_last_item()
 
     def select_item(self, selected_btn):
         self.selected = selected_btn
 
-        for t, btn in self.items:
+        for _, btn in self.items:
             if btn == selected_btn:
                 btn.configure(fg_color="#b91c1c")  # selected
             else:
                 btn.configure(fg_color=("gray75", "#3A3A3A"))
 
+        # Get selected text
         selected_text = next((t for t, b in self.items if b == selected_btn), None)
 
         if self.on_select and selected_text:
-            # Split "SN,password"
             parts = selected_text.split(", ", 1)
             password_part = parts[1] if len(parts) > 1 else parts[0]
-
             password = password_part.split("  |")[0]
-
             self.on_select(password)
 
     def delete_selected(self):
         if self.selected is None:
             return
 
-        deleted_text = next((t for t, b in self.items if b == self.selected), None)
+        # Find index BEFORE removal
+        index = self.get_selected_index()
+        deleted_btn = self.selected
 
-        self.selected.destroy()
-        self.items = [(t, b) for t, b in self.items if b != self.selected]
-        self.select_last_item()
+        # Remove from list
+        self.items = [(t, b) for t, b in self.items if b != deleted_btn]
 
-        print("Deleted: ", deleted_text)
+        # Destroy widget
+        deleted_btn.destroy()
+        self.selected = None
+
+        # Repack remaining buttons
+        self._repack_buttons()
+
+        # Select nearest item
+        if self.items:
+            new_index = min(index, len(self.items) - 1)
+            _, new_btn = self.items[new_index]
+            self.select_item(new_btn)
+
 
     def delete_all(self):
-        for text, btn in self.items:
+        for _, btn in self.items:
             btn.destroy()
         self.items.clear()
         self.selected = None
 
     def get_selected_index(self):
-        for i, (text, btn) in enumerate(self.items):
+        for i, (_, btn) in enumerate(self.items):
             if btn == self.selected:
                 return i
         return None
@@ -555,6 +588,7 @@ class PasswordList(customTk.CTkScrollableFrame):
         if self.selected is None:
             messagebox.showerror("Error", "Please select a Service Number.")
             return
+
         selected_text = next((t for t, b in self.items if b == self.selected), None)
         if not selected_text:
             messagebox.showerror("Error", "Could not find selected item.")
@@ -562,13 +596,44 @@ class PasswordList(customTk.CTkScrollableFrame):
 
         parts = selected_text.split(",", 1)
         service_number = parts[0]
+
         print("Running Service Now... SN:", service_number)
         app.service_now(service_number)
 
     def select_last_item(self):
         if self.items:
-            _, last_btn = self.items[0]
+            _, last_btn = self.items[-1]  # newest item
             self.select_item(last_btn)
+
+    def on_arrow_down(self, event):
+        if not self.items:
+            return
+
+        index = self.get_selected_index()
+
+        # If nothing selected, go to last item
+        if index is None:
+            index = len(self.items) - 1
+        else:
+            index = max(0, index - 1)
+
+        _, btn = self.items[index]
+        self.select_item(btn)
+
+    def on_arrow_up(self, event):
+        if not self.items:
+            return
+
+        index = self.get_selected_index()
+
+        # If nothing selected, go to first item
+        if index is None:
+            index = 0
+        else:
+            index = min(len(self.items) - 1, index + 1)
+
+        _, btn = self.items[index]
+        self.select_item(btn)
 
 class QRCodeFrame(customTk.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -679,7 +744,7 @@ class MenuFrame(customTk.CTkFrame):
         self.browser_buttons.configure(selected_color="#0078D7", selected_hover_color="#0087F5")
         #self.divider_canvas = customTk.CTkCanvas(bg="#2b2b2b", highlightthickness=0, width=2, height=50)
 
-        self.sn_label.grid(row=0, column=0, padx=20, pady=15)
+        self.sn_label.grid(row=0, column=0, padx=15, pady=15)
         self.sn_entry.grid(row=0, column=1, padx=0, pady=5, sticky="ew")
         self.submit_button.grid(row=0, column=2, padx=15, pady=5)
         self.service_now_button.grid(row=0, column=3, sticky="e")
@@ -688,7 +753,7 @@ class MenuFrame(customTk.CTkFrame):
         #self.divider_canvas.create_line(1, 0, 1, 60, fill="#444444", width=2)
 
 class DeleteButtonsFrame(customTk.CTkFrame):
-    def __init__(self, master, delete_history_callback, delete_selected_callback, **kwargs):
+    def __init__(self, master, delete_history_callback, delete_selected_callback, reset_button_callback, **kwargs):
         super().__init__(master, **kwargs)
 
         self.grid_rowconfigure(0, weight=0)
@@ -700,9 +765,16 @@ class DeleteButtonsFrame(customTk.CTkFrame):
 
         self.delete_history_button = customTk.CTkButton(self, command=delete_history_callback, text="Delete History", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
         self.delete_selected_button = customTk.CTkButton(self, command=delete_selected_callback, text="Delete Selected", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
+        self.reset_button = customTk.CTkButton(self, text="Remove GIFs",
+                                               command=reset_button_callback,
+                                               fg_color="#deb10d",
+                                               hover_color="#f0c93e",
+                                               text_color="black")
+
 
         self.delete_selected_button.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
         self.delete_history_button.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
+        self.reset_button.grid_remove()
 
 if __name__ == '__main__':
     app = App()
