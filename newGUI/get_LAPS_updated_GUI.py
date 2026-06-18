@@ -93,7 +93,8 @@ class App(customTk.CTk):
                                     submit_callback=self.submit_service_tag,
                                     submit_service_tag_callback=self.submit_service_tag,
                                     run_servicenow_callback=self.password_frame.run_servicenow,
-                                    width=680, height=60)
+                                    browser_button_callback=self.browser_button_change,
+                                    width=880, height=60)
 
         self.delete_buttons_frame = DeleteButtonsFrame(master=self,
                                                        delete_history_callback=self.delete_history,
@@ -110,9 +111,6 @@ class App(customTk.CTk):
                                                hover_color="#f0c93e",
                                                text_color="black")
 
-        self.browser_buttons = customTk.CTkSegmentedButton(self, values=["Edge", "Chrome"], command=self.browser_button_change)
-        self.browser_buttons.set("Edge")
-        self.browser_buttons.configure(selected_color="#0078D7", selected_hover_color="#0087F5")
 
         # --- Label ---
         self.password_label = customTk.CTkLabel(self, text="Password will appear below", font=('default', 22, "bold"), anchor="w")
@@ -137,8 +135,7 @@ class App(customTk.CTk):
 
         #region Layout
         # --- Layout ---
-        self.menu_frame.grid(row=0, column=0, rowspan=1, columnspan=8, padx=20, pady=10, sticky="w")
-        self.browser_buttons.grid(row=1, column=6, sticky="e")
+        self.menu_frame.grid(row=0, column=0, rowspan=1, columnspan=11, padx=20, pady=10, sticky="w")
         #self.password_label.grid(row=1, column=0, padx=30, pady=10, columnspan=2, sticky="w")
         self.password_frame.grid(row=3, column=0, columnspan=7, rowspan=4,padx=20, pady=20, sticky="nsew")
         #self.qr_label.grid(row=3, column=7, columnspan=4, sticky="n")
@@ -153,9 +150,9 @@ class App(customTk.CTk):
     def browser_button_change(self, value):
         browser = value
         if browser == "Edge":
-            self.browser_buttons.configure(selected_color="#0078D7", selected_hover_color="#0087F5")
+            self.menu_frame.browser_buttons.configure(selected_color="#0078D7", selected_hover_color="#0087F5")
         else:
-            self.browser_buttons.configure(selected_color="#309C4D", selected_hover_color="#35AC54")
+            self.menu_frame.browser_buttons.configure(selected_color="#309C4D", selected_hover_color="#35AC54")
 
     def click(self, event, source):
         x,y = event.x, event.y
@@ -179,7 +176,7 @@ class App(customTk.CTk):
             self.menu_frame.sn_entry.delete(0, "end")
             self.run_powershell(service_number)
             self.create_qr_code("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-            self.debug_label.place(x=660, y=280)
+            self.debug_label.place(x=660, y=310)
             self.debug_label.configure(text="Oh! You found an easter egg!")
             self.after(15000, self.reset_function)
 
@@ -371,22 +368,22 @@ class App(customTk.CTk):
 
     def _service_now_task(self, service_number):
         print("ServiceNow thread started")
-        print("Browser:", self.browser_buttons.get())
+        print("Browser:", self.menu_frame.browser_buttons.get())
         driver = None
         try:
-            if self.browser_buttons.get() == "Edge":
+            if self.menu_frame.browser_buttons.get() == "Edge":
                 driver_path = resource_path("newGUI\\msedgedriver.exe")
                 service = Service(driver_path)
                 driver = webdriver.Edge(service=service)
                 print("Edge started")
-            elif self.browser_buttons.get() == "Chrome":
+            elif self.menu_frame.browser_buttons.get() == "Chrome":
                 driver_path = resource_path("newGUI\\chromedriver.exe")
                 service = Service(driver_path)
                 driver = webdriver.Chrome(service=service)
                 print("Chrome started")
 
             #self.after(2000, self.iconify)
-            wait = WebDriverWait(driver, 10)
+            #wait = WebDriverWait(driver, 10)
 
             driver.get(f"https://itsupport.michels.us/now/nav/ui/classic/params/target/alm_hardware.do%3Fsysparm_query=asset_tag%3D{service_number}%26sysparm_view=MyCompanyAssets")
             time.sleep(3)
@@ -496,13 +493,19 @@ class PasswordList(customTk.CTkScrollableFrame):
             text=text,
             anchor="w",
             font=("Consolas", 25, "bold"),
-            height=60
+            height=60,
+            corner_radius=6
         )
         btn.configure(command=lambda b=btn: self.select_item(b))
 
-        btn.pack(fill="x", padx=5, pady=2)
+        self.items.insert(0, (text, btn))
+        for _, b in self.items:
+            b.pack_forget()
 
-        self.items.append((text, btn))
+        for _, b in self.items:
+            b.pack(fill="x", padx=1, pady=1)
+
+        self.select_last_item()
 
     def select_item(self, selected_btn):
         self.selected = selected_btn
@@ -511,7 +514,7 @@ class PasswordList(customTk.CTkScrollableFrame):
             if btn == selected_btn:
                 btn.configure(fg_color="#b91c1c")  # selected
             else:
-                btn.configure(fg_color=("gray75", "gray25"))
+                btn.configure(fg_color=("gray75", "#3A3A3A"))
 
         selected_text = next((t for t, b in self.items if b == selected_btn), None)
 
@@ -532,7 +535,7 @@ class PasswordList(customTk.CTkScrollableFrame):
 
         self.selected.destroy()
         self.items = [(t, b) for t, b in self.items if b != self.selected]
-        self.selected = None
+        self.select_last_item()
 
         print("Deleted: ", deleted_text)
 
@@ -561,6 +564,11 @@ class PasswordList(customTk.CTkScrollableFrame):
         service_number = parts[0]
         print("Running Service Now... SN:", service_number)
         app.service_now(service_number)
+
+    def select_last_item(self):
+        if self.items:
+            _, last_btn = self.items[0]
+            self.select_item(last_btn)
 
 class QRCodeFrame(customTk.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -647,10 +655,17 @@ class CTkGif(customTk.CTkLabel):
         self.after(delay, self._animate)
 
 class MenuFrame(customTk.CTkFrame):
-    def __init__(self, master, submit_callback, submit_service_tag_callback, run_servicenow_callback, **kwargs):
+    def __init__(self, master, submit_callback, submit_service_tag_callback, run_servicenow_callback, browser_button_callback, **kwargs):
         super().__init__(master, **kwargs)
 
         self.grid_propagate(False)
+
+        self.grid_columnconfigure(0, weight=0)
+        self.grid_columnconfigure(1, weight=1)  # entry expands
+        self.grid_columnconfigure(2, weight=0)
+        self.grid_columnconfigure(3, weight=0)
+        self.grid_columnconfigure(4, weight=0)  # divider stays tight
+        self.grid_columnconfigure(5, weight=0)
 
         self.sn_label = customTk.CTkLabel(self, text="Service Number", font=('default', 22, "bold"))
         self.submit_button = customTk.CTkButton(self, text="Submit", command=submit_callback)
@@ -658,11 +673,19 @@ class MenuFrame(customTk.CTkFrame):
         self.sn_entry.bind("<Return>", submit_service_tag_callback)
         self.service_now_button = customTk.CTkButton(self, text="ServiceNow",
                                                      command=run_servicenow_callback)
+        self.browser_buttons = customTk.CTkSegmentedButton(self, values=["Edge", "Chrome"],
+                                                           command=browser_button_callback)
+        self.browser_buttons.set("Edge")
+        self.browser_buttons.configure(selected_color="#0078D7", selected_hover_color="#0087F5")
+        #self.divider_canvas = customTk.CTkCanvas(bg="#2b2b2b", highlightthickness=0, width=2, height=50)
 
         self.sn_label.grid(row=0, column=0, padx=20, pady=15)
-        self.sn_entry.grid(row=0, column=1, padx=0, pady=5)
+        self.sn_entry.grid(row=0, column=1, padx=0, pady=5, sticky="ew")
         self.submit_button.grid(row=0, column=2, padx=15, pady=5)
         self.service_now_button.grid(row=0, column=3, sticky="e")
+        self.browser_buttons.grid(row=0, column=5, padx=(15,20), pady=5)
+        #self.divider_canvas.grid(row=0, column=4, padx=15, pady=5)
+        #self.divider_canvas.create_line(1, 0, 1, 60, fill="#444444", width=2)
 
 class DeleteButtonsFrame(customTk.CTkFrame):
     def __init__(self, master, delete_history_callback, delete_selected_callback, **kwargs):
@@ -675,8 +698,8 @@ class DeleteButtonsFrame(customTk.CTkFrame):
 
         self.grid_columnconfigure(0, weight=1)
 
-        self.delete_history_button = customTk.CTkButton(self, command=delete_history_callback, text="Delete History")
-        self.delete_selected_button = customTk.CTkButton(self, command=delete_selected_callback, text="Delete Selected")
+        self.delete_history_button = customTk.CTkButton(self, command=delete_history_callback, text="Delete History", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
+        self.delete_selected_button = customTk.CTkButton(self, command=delete_selected_callback, text="Delete Selected", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
 
         self.delete_selected_button.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
         self.delete_history_button.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
@@ -688,6 +711,7 @@ if __name__ == '__main__':
     file_path = os.path.join(desktop, "LAPSHistory.txt")
     print("File path: ", file_path)
     app.load_history()
+    app.password_frame.select_last_item()
     app.title("Get LAPS History")
 
     app.mainloop()
