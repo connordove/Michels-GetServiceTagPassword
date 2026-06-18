@@ -31,9 +31,13 @@ customtkinter.set_default_color_theme(
 class App(customTk.CTk):
     def __init__(self):
         super().__init__()
-        self.geometry("920x630")
+        self.geometry("900x600")
         self.title("My GUI")
         self.icon_path = (resource_path('newGUI/michels_icon.ico'))
+        self.settings_path = os.path.join(
+            os.environ["APPDATA"],
+            "LAPSSettings.json"
+        )
         self.resizable(False, False)
 
         self.bind_all("<Up>", lambda e: self.password_frame.on_arrow_up(e))
@@ -95,7 +99,7 @@ class App(customTk.CTk):
                                     submit_service_tag_callback=self.submit_service_tag,
                                     run_servicenow_callback=self.password_frame.run_servicenow,
                                     browser_button_callback=self.browser_button_change,
-                                    width=880, height=60)
+                                    width=856, height=60)
 
         self.delete_buttons_frame = DeleteButtonsFrame(master=self,
                                                        delete_history_callback=self.delete_history,
@@ -107,7 +111,6 @@ class App(customTk.CTk):
 
         # --- Button ---
         self.debug_btn = customTk.CTkButton(self, text="DEBUG")
-
 
         # --- Label ---
         self.qr_label = customTk.CTkLabel(self, text="")
@@ -125,7 +128,7 @@ class App(customTk.CTk):
         self.michels_label.bind("<Button-1>", lambda e: self.click(e, "Michels"))
 
         # --- GIF ---
-        self.gif1 = CTkGif(self, resource_path("newGUI\\djCat.gif"), size=(600,400))
+        self.gif1 = CTkGif(self, resource_path("newGUI\\djCat.gif"), size=(800,500))
         self.gif2 = CTkGif(self, resource_path("newGUI\\HappyCat.gif"), size=(100, 100))
         self.gif3 = CTkGif(self, resource_path("newGUI\\JackHammer.gif"), size=(100, 100))
 
@@ -148,6 +151,15 @@ class App(customTk.CTk):
             self.menu_frame.browser_buttons.configure(selected_color="#0078D7", selected_hover_color="#0087F5")
         else:
             self.menu_frame.browser_buttons.configure(selected_color="#309C4D", selected_hover_color="#35AC54")
+
+        # SAVE selection
+        try:
+            with open(self.settings_path, "w") as f:
+                import json
+                json.dump({"browser": browser}, f)
+                print("Saved browser:", browser)
+        except Exception as e:
+            print("Error saving settings:", e)
 
     def click(self, event, source):
         x,y = event.x, event.y
@@ -341,7 +353,7 @@ class App(customTk.CTk):
     def surprise(self, name):
         if name == "Michels":
 
-            self.gif1.place(x=150, y=80)
+            self.gif1.place(x=20, y=20)
         else:
             self.gif2.place(x=20, y=20)
             self.gif3.place(x=540, y=470)
@@ -493,6 +505,29 @@ class App(customTk.CTk):
 
         if not str(widget).startswith(str(self.menu_frame.sn_entry)):
             self.focus()
+
+    def load_settings(self):
+        try:
+            import json
+            with open(self.settings_path, "r") as f:
+                settings = json.load(f)
+
+            print("Settings:", settings)
+            browser = settings.get("browser", "Edge")
+            print("Browser JSON:", browser)
+
+            # Set the button
+            self.menu_frame.after(0, lambda: (self.menu_frame.browser_buttons.set(browser),
+                                  self.browser_button_change(browser)))
+
+        except FileNotFoundError:
+            # First run → default to Edge
+            self.menu_frame.browser_buttons.set("Edge")
+            self.browser_button_change("Edge")
+
+        except Exception as e:
+            print("Error loading settings:", e)
+
     #endregion
 
 class PasswordList(customTk.CTkScrollableFrame):
@@ -731,6 +766,7 @@ class MenuFrame(customTk.CTkFrame):
         self.grid_columnconfigure(3, weight=0)
         self.grid_columnconfigure(4, weight=0)  # divider stays tight
         self.grid_columnconfigure(5, weight=0)
+        self.grid_columnconfigure(6, weight=0)
 
         self.sn_label = customTk.CTkLabel(self, text="Service Number", font=('default', 22, "bold"))
         self.submit_button = customTk.CTkButton(self, text="Submit", command=submit_callback)
@@ -740,17 +776,18 @@ class MenuFrame(customTk.CTkFrame):
                                                      command=run_servicenow_callback)
         self.browser_buttons = customTk.CTkSegmentedButton(self, values=["Edge", "Chrome"],
                                                            command=browser_button_callback)
-        self.browser_buttons.set("Edge")
+        #self.browser_buttons.set("Edge")
         self.browser_buttons.configure(selected_color="#0078D7", selected_hover_color="#0087F5")
-        #self.divider_canvas = customTk.CTkCanvas(bg="#2b2b2b", highlightthickness=0, width=2, height=50)
+        self.divider = customTk.CTkFrame(self, width=2, fg_color="#444444", height=25)
 
         self.sn_label.grid(row=0, column=0, padx=15, pady=15)
         self.sn_entry.grid(row=0, column=1, padx=0, pady=5, sticky="ew")
         self.submit_button.grid(row=0, column=2, padx=15, pady=5)
         self.service_now_button.grid(row=0, column=3, sticky="e")
-        self.browser_buttons.grid(row=0, column=5, padx=(15,20), pady=5)
-        #self.divider_canvas.grid(row=0, column=4, padx=15, pady=5)
-        #self.divider_canvas.create_line(1, 0, 1, 60, fill="#444444", width=2)
+        self.divider.grid(row=0, column=4, padx=15)
+        self.browser_buttons.grid(row=0, column=5, padx=(0,20), pady=5)
+
+
 
 class DeleteButtonsFrame(customTk.CTkFrame):
     def __init__(self, master, delete_history_callback, delete_selected_callback, reset_button_callback, **kwargs):
@@ -770,11 +807,18 @@ class DeleteButtonsFrame(customTk.CTkFrame):
                                                fg_color="#deb10d",
                                                hover_color="#f0c93e",
                                                text_color="black")
-
+        self.temp_button = customTk.CTkButton(self, text="Temp", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
+        #self.temp_button2 = customTk.CTkButton(self, text="Temp", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
+        self.fun_bar = customTk.CTkProgressBar(master=self, mode="indeterminate", progress_color="Green", indeterminate_speed=.3, width=30, corner_radius=12)
 
         self.delete_selected_button.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
         self.delete_history_button.grid(row=1, column=0, padx=10, pady=10, sticky="nsew")
-        self.reset_button.grid_remove()
+        self.temp_button.grid(row=2, column=0, padx=10, pady=10, sticky="nsew")
+        #self.temp_button2.grid(row=3, column=0, padx=10, pady=10, sticky="nsew")
+        self.fun_bar.grid(row=3, column=0, padx=10, pady=10, sticky="nsew")
+
+        self.fun_bar.start()
+
 
 if __name__ == '__main__':
     app = App()
@@ -785,5 +829,6 @@ if __name__ == '__main__':
     app.load_history()
     app.password_frame.select_last_item()
     app.title("Get LAPS History")
+    app.load_settings()
 
     app.mainloop()
