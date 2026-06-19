@@ -1,4 +1,5 @@
 import ctypes
+import json
 import os
 import re
 import subprocess
@@ -24,16 +25,23 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-customtkinter.set_default_color_theme(
-    resource_path("michels_theme.json")
-)
+
+theme_path = resource_path(r"newGUI/michels_theme.json")
+
+print("THEME PATH:", theme_path)
+print("EXISTS:", os.path.exists(theme_path))
+
+customtkinter.set_default_color_theme(theme_path)
+
 
 class App(customTk.CTk):
     def __init__(self):
         super().__init__()
         self.geometry("900x600")
         self.title("My GUI")
-        self.icon_path = (resource_path('michels_icon.ico'))
+        self.desktop = os.path.join(os.environ["USERPROFILE"], "OneDrive - Michels Corporation", "Desktop")
+        self.file_path = os.path.join(self.desktop, "LAPSHistory.txt")
+        self.icon_path = (resource_path('newGUI/Unlock_2_HighRes.ico'))
         self.settings_path = os.path.join(
             os.environ["APPDATA"],
             "LAPSSettings.json"
@@ -69,7 +77,7 @@ class App(customTk.CTk):
         self.grid_rowconfigure(2, weight=1)
         self.grid_rowconfigure(3, weight=1)
         self.grid_rowconfigure(4, weight=1)
-        self.grid_rowconfigure(5, weight=2)
+        self.grid_rowconfigure(5, weight=1)
         self.grid_rowconfigure(6, weight=1)
         self.grid_rowconfigure(7, weight=1)
         self.grid_rowconfigure(8, weight=1)
@@ -82,16 +90,16 @@ class App(customTk.CTk):
             master=self,
             on_select=self.create_qr_code,
             width=600,
-            height=400
+            height=400,
+            fg_color="transparent"
         )
 
         self.qr_frame = QRCodeFrame (master=self,
                                      width=200,
                                      height=200,
-                                     fg_color="#2b2b2b",
-                                     border_color="#fff",
+                                     fg_color=("#D6D6D6","#1e1e1e"),
+                                     border_color=("#333333","#fff"),
                                      border_width=2
-
                                      )
 
         self.menu_frame = MenuFrame(master=self,
@@ -99,14 +107,16 @@ class App(customTk.CTk):
                                     submit_service_tag_callback=self.submit_service_tag,
                                     run_servicenow_callback=self.password_frame.run_servicenow,
                                     browser_button_callback=self.browser_button_change,
-                                    width=856, height=60)
+                                    width=856, height=60, border_width=1, border_color="#333333")
 
         self.delete_buttons_frame = DeleteButtonsFrame(master=self,
                                                        delete_history_callback=self.delete_history,
                                                        delete_selected_callback=self.delete_selected,
                                                        reset_button_callback=self.reset_function,
                                                        width=100,
-                                                       height=100)
+                                                       height=100,
+                                                       border_width=1,
+                                                       border_color="#333333")
 
 
         # --- Button ---
@@ -120,27 +130,27 @@ class App(customTk.CTk):
         # --- Entry ---
 
         # --- Image ---
-        self.image_file = customtkinter.CTkImage(light_image=Image.open(resource_path("MichelsWeDoThat.png")),
-                                            dark_image=Image.open(resource_path("MichelsWeDoThat.png")),
-                                            size=(850, 50))
+        self.image_file = customtkinter.CTkImage(light_image=Image.open(resource_path("newGUI/Michels Logo We Do That And More Two Lines.png")),
+                                            dark_image=Image.open(resource_path("newGUI/Michels Logo We Do That And More Two Lines White.png")),
+                                            size=(600, 100))
         self.michels_label = customTk.CTkLabel(self, text="", image=self.image_file)
         self.m_click_count = 0
         self.michels_label.bind("<Button-1>", lambda e: self.click(e, "Michels"))
 
+
         # --- GIF ---
-        self.gif1 = CTkGif(self, resource_path("djCat.gif"), size=(800,500))
-        self.gif2 = CTkGif(self, resource_path("HappyCat.gif"), size=(100, 100))
-        self.gif3 = CTkGif(self, resource_path("JackHammer.gif"), size=(100, 100))
+        self.gif1 = CTkGif(self, resource_path("newGUI/djCat.gif"), size=(800,500))
+        self.gif2 = CTkGif(self, resource_path("newGUI/HappyCat.gif"), size=(100, 100))
+        self.gif3 = CTkGif(self, resource_path("newGUI/JackHammer.gif"), size=(100, 100))
 
         #region Layout
         # --- Layout ---
-        self.menu_frame.grid(row=0, column=0, rowspan=1, columnspan=11, padx=20, pady=10, sticky="w")
-        self.password_frame.grid(row=3, column=0, columnspan=7, rowspan=4,padx=20, pady=20, sticky="nsew")
+        self.menu_frame.grid(row=0, column=0, rowspan=1, columnspan=11, padx=20, pady=(20, 0), sticky="w")
+        self.password_frame.grid(row=3, column=0, columnspan=7, rowspan=3,padx=20, pady=0, sticky="nsew")
         #self.qr_label.grid(row=3, column=7, columnspan=4, sticky="n")
-        self.qr_frame.grid(row=3, column=7, rowspan=2, padx=5, pady=20, sticky="nsew")
-        self.delete_buttons_frame.grid(row=5, column=7, rowspan=2, padx=5, pady=20, sticky="nsew")
-
-        self.michels_label.grid(row=7, column=0, padx=20, pady=10, columnspan=10, sticky="w")
+        self.qr_frame.grid(row=2, column=7, rowspan=3, padx=5, pady=(30,0), sticky="n")
+        self.delete_buttons_frame.grid(row=5, column=7, rowspan=2, padx=5, pady=(0,10), sticky="nsew")
+        self.michels_label.grid(row=6, column=0, padx=20, pady=0, columnspan=4, sticky="sw")
 
         #endregion
 
@@ -166,7 +176,7 @@ class App(customTk.CTk):
         #print(f"Clicked at: {x}, {y}")
         #print(source)
         if source == "Michels":
-            if 5 < x <= 54 and 2 < y <= 46:
+            if 0 < x <= 98 and 20 < y <= 109:
                 self.m_click_count += 1
                 #print(self.m_click_count)
                 if self.m_click_count >= 10:
@@ -191,7 +201,7 @@ class App(customTk.CTk):
             return
 
         # runs if service number is not blank
-        elif service_number != "":
+        elif service_number.strip() != "":
             print("SERVICE NUMBER: " + service_number)
             self.run_powershell(service_number)
 
@@ -217,10 +227,11 @@ class App(customTk.CTk):
 
         output = result.stdout
         #print(output)
-
         password_match = re.search(r"Password\s*:\s*(\S+)", output)
         expiration_match = re.search(r"ExpirationTimestamp\s*:\s*(\S+)", output)
 
+        expired = False
+        expired_date = None
         if expiration_match:
             expired_string = expiration_match.group(1).split('/')
             expired_date = date(int(expired_string[2]), int(expired_string[0]), int(expired_string[1]))
@@ -248,7 +259,7 @@ class App(customTk.CTk):
 
         # create QR Code
         try:
-            with open(file_path, "a", encoding="utf-8") as f:
+            with open(self.file_path, "a", encoding="utf-8") as f:
                 f.write(f"{service_number}, {password}\n")
         except Exception as e:
             print("File write error: ", e)
@@ -257,7 +268,7 @@ class App(customTk.CTk):
 
     def load_history(self):
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(self.file_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
             recent = lines[-100:]
@@ -265,6 +276,8 @@ class App(customTk.CTk):
             self.password_frame.delete_all()
 
             for line in recent:
+                if "," not in line:
+                    continue
                 self.password_frame.add_item(line.strip())
 
 
@@ -279,8 +292,8 @@ class App(customTk.CTk):
             print("Deleting history file...")
             self.password_frame.delete_all()
             try:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
+                if os.path.exists(self.file_path):
+                    os.remove(self.file_path)
                     # Force Windows Explorer refresh
                     HWND_BROADCAST = 0xFFFF
                     WM_COMMAND = 0x0111
@@ -312,9 +325,9 @@ class App(customTk.CTk):
 
             self.password_frame.delete_selected()
 
-            with open(file_path, "r", encoding="utf-8") as fr:
+            with open(self.file_path, "r", encoding="utf-8") as fr:
                 lines = fr.readlines()
-                with open(file_path, "w", encoding="utf-8") as fw:
+                with open(self.file_path, "w", encoding="utf-8") as fw:
                     for i, line in enumerate(lines):
                         if i != selected_index:
                             fw.write(line)
@@ -355,9 +368,9 @@ class App(customTk.CTk):
 
             self.gif1.place(x=20, y=20)
         else:
-            self.gif2.place(x=20, y=20)
-            self.gif3.place(x=540, y=470)
-        self.delete_buttons_frame.reset_button.grid(row=3, column=0, padx=10, pady=10, sticky="nsew")
+            self.gif2.place(x=30, y=10)
+            self.gif3.place(x=540, y=420)
+        self.delete_buttons_frame.reset_button.grid(row=4, column=0, padx=10, pady=10, sticky="nsew")
         self.gif1.start()
         self.gif2.start()
         self.gif3.start()
@@ -386,15 +399,23 @@ class App(customTk.CTk):
         driver = None
         try:
             if self.menu_frame.browser_buttons.get() == "Edge":
-                driver_path = resource_path("msedgedriver.exe")
+                driver_path = resource_path("newGUI/msedgedriver.exe")
                 service = Service(driver_path)
-                driver = webdriver.Edge(service=service)
+                try:
+                    driver = webdriver.Edge(service=service)
+                except Exception as e:
+                    messagebox.showerror("Browser Error", str(e))
+                    return
                 print("Edge started")
             elif self.menu_frame.browser_buttons.get() == "Chrome":
-                driver_path = resource_path("chromedriver.exe")
+                driver_path = resource_path("newGUI/chromedriver.exe")
                 service = Service(driver_path)
-                driver = webdriver.Chrome(service=service)
-                print("Chrome started")
+                try:
+                    driver = webdriver.Chrome(service=service)
+                except Exception as e:
+                    messagebox.showerror("Browser Error", str(e))
+                    return                (
+                print("Chrome started"))
 
             #self.after(2000, self.iconify)
             #wait = WebDriverWait(driver, 10)
@@ -453,14 +474,21 @@ class App(customTk.CTk):
                     correct_info = self.topmost_messagebox(
                                                         messagebox.askyesno,
                                                         "Confirm Info",
-                                                        "Confirm the input info is correct:\nDoes info require modification?",
+                                                        "Confirm the input info is correct.",
                                                         icon="question"
                                                         )
-                    if not correct_info:
+                    if correct_info:
                         update_button_element.click()
+                    else:
+                        if driver:
+                            driver.quit()
+                        self.topmost_messagebox(messagebox.showerror, "Error", "Input Info Was Incorrect\nPlease Fix Manually")
+
 
                 except Exception as e:
                     messagebox.showerror("ServiceNow Error", str(e))
+            else:
+                self.topmost_messagebox(messagebox.showerror, "Error", "Error Logging In To ServiceNow")
 
         finally:
             if driver:
@@ -537,15 +565,19 @@ class PasswordList(customTk.CTkScrollableFrame):
         self.items = []  # [(text, button)] oldest -> newest
         self.selected = None
         self.on_select = on_select
+        self.spacer = customTk.CTkFrame(self, height=20, fg_color="transparent")
 
     def add_item(self, text):
         btn = customTk.CTkButton(
             self,
             text=text,
             anchor="w",
-            font=("Consolas", 25, "bold"),
+            font=("Segoe UI Semibold", 24, "normal"),
             height=60,
-            corner_radius=2
+            corner_radius=2,
+            border_width=2,
+            border_color=("#C02918","#333333"),
+            hover_color=("#EB6A5C","#df1f36"),
         )
         btn.configure(command=lambda b=btn: self.select_item(b))
 
@@ -560,18 +592,24 @@ class PasswordList(customTk.CTkScrollableFrame):
         for _, b in self.items:
             b.pack_forget()
 
+        self.spacer.pack_forget()  # ensure no duplicates
+
+        self.spacer.pack(fill="x")
+
+
         # Pack newest first (top of UI)
         for _, b in reversed(self.items):
             b.pack(fill="x", padx=1, pady=1)
+
 
     def select_item(self, selected_btn):
         self.selected = selected_btn
 
         for _, btn in self.items:
             if btn == selected_btn:
-                btn.configure(fg_color="#b91c1c")  # selected
+                btn.configure(fg_color=("#EF8B80", "#b91c1c"))  # selected
             else:
-                btn.configure(fg_color=("gray75", "#3A3A3A"))
+                btn.configure(fg_color=("#D6D6D6", "#333333"))
 
         # Get selected text
         selected_text = next((t for t, b in self.items if b == selected_btn), None)
@@ -769,11 +807,11 @@ class MenuFrame(customTk.CTkFrame):
         self.grid_columnconfigure(6, weight=0)
 
         self.sn_label = customTk.CTkLabel(self, text="Service Number", font=('default', 22, "bold"))
-        self.submit_button = customTk.CTkButton(self, text="Submit", command=submit_callback)
+        self.submit_button = customTk.CTkButton(self, text="Submit", command=submit_callback, text_color="#DCE4EE")
         self.sn_entry = customTk.CTkEntry(self, placeholder_text="Enter SN Here", font=('default', 18, "bold"))
         self.sn_entry.bind("<Return>", submit_service_tag_callback)
         self.service_now_button = customTk.CTkButton(self, text="ServiceNow",
-                                                     command=run_servicenow_callback)
+                                                     command=run_servicenow_callback, text_color="#DCE4EE")
         self.browser_buttons = customTk.CTkSegmentedButton(self, values=["Edge", "Chrome"],
                                                            command=browser_button_callback)
         #self.browser_buttons.set("Edge")
@@ -798,14 +836,14 @@ class DeleteButtonsFrame(customTk.CTkFrame):
 
         self.grid_columnconfigure(0, weight=1)
 
-        self.delete_history_button = customTk.CTkButton(self, command=delete_history_callback, text="Delete History", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
-        self.delete_selected_button = customTk.CTkButton(self, command=delete_selected_callback, text="Delete Selected", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
+        self.delete_history_button = customTk.CTkButton(self, command=delete_history_callback, text="Delete History", border_color="#55565a", border_width=2, fg_color="transparent", hover_color=("#CCCCCC","#474747"))
+        self.delete_selected_button = customTk.CTkButton(self, command=delete_selected_callback, text="Delete Selected", border_color="#55565a", border_width=2, fg_color="transparent", hover_color=("#CCCCCC","#474747"))
         self.reset_button = customTk.CTkButton(self, text="Remove GIFs",
                                                command=reset_button_callback,
                                                fg_color="#deb10d",
                                                hover_color="#f0c93e",
                                                text_color="black")
-        self.temp_button = customTk.CTkButton(self, text="Temp", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
+        self.temp_button = customTk.CTkButton(self, text="TEMP BUTTON", border_color="#55565a", border_width=2, fg_color="transparent", hover_color=("#CCCCCC","#474747"))
         #self.temp_button2 = customTk.CTkButton(self, text="Temp", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
         self.fun_bar = customTk.CTkProgressBar(master=self, mode="indeterminate", progress_color="#fdb916", indeterminate_speed=.3, width=30, corner_radius=12)
 
@@ -817,13 +855,10 @@ class DeleteButtonsFrame(customTk.CTkFrame):
 
         self.fun_bar.start()
 
-
 if __name__ == '__main__':
     app = App()
     print("Today's Date: ", date.today())
-    desktop = os.path.join(os.environ["USERPROFILE"], "OneDrive - Michels Corporation", "Desktop")
-    file_path = os.path.join(desktop, "LAPSHistory.txt")
-    print("File path: ", file_path)
+    print("File path: ", app.file_path)
     app.load_history()
     app.password_frame.select_last_item()
     app.title("Get LAPS History")
