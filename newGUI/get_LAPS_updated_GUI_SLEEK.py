@@ -1,5 +1,4 @@
 import ctypes
-import json
 import os
 import re
 import subprocess
@@ -8,6 +7,7 @@ import time
 import tkinter
 from datetime import date
 from tkinter import messagebox
+import print_label
 import customtkinter
 import customtkinter as customTk
 import qrcode
@@ -25,7 +25,6 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-
 theme_path = resource_path(r"newGUI/michels_theme.json")
 
 print("THEME PATH:", theme_path)
@@ -33,17 +32,17 @@ print("EXISTS:", os.path.exists(theme_path))
 
 customtkinter.set_default_color_theme(theme_path)
 
-
 class App(customTk.CTk):
     def __init__(self):
         super().__init__()
+        self.printer = print_label.LabelPrinter()
         self.geometry("900x600")
         self.title("My GUI")
-        self.desktop = os.path.join(os.environ["USERPROFILE"], "OneDrive - Michels Corporation", "Desktop")
+        self.desktop = os.path.join(os.environ["LOCALAPPDATA"])
         self.file_path = os.path.join(self.desktop, "LAPSHistory.txt")
         self.icon_path = (resource_path('newGUI/Unlock_2_HighRes.ico'))
         self.settings_path = os.path.join(
-            os.environ["APPDATA"],
+            os.environ["LOCALAPPDATA"],
             "LAPSSettings.json"
         )
         self.resizable(False, False)
@@ -113,6 +112,7 @@ class App(customTk.CTk):
                                                        delete_history_callback=self.delete_history,
                                                        delete_selected_callback=self.delete_selected,
                                                        reset_button_callback=self.reset_function,
+                                                       print_label_callback=self.gen_and_print_label,
                                                        width=100,
                                                        height=100,
                                                        border_width=1,
@@ -155,6 +155,34 @@ class App(customTk.CTk):
         #endregion
 
     #region defs
+
+    def gen_and_print_label(self):
+        if self.password_frame.selected is None:
+            print("Nothing selected")
+            return
+
+        # Get selected text
+        selected_text = next(
+            (t for t, b in self.password_frame.items if b == self.password_frame.selected),
+            None
+        )
+
+        if not selected_text:
+            print("No text found for selection")
+            return
+
+        # Extract serial number (before comma)
+        parts = selected_text.split(",", 1)
+        serial_number = parts[0].strip()
+
+        confirm_print = messagebox.askyesno("Confirm Print", f"Confirm you want to print label for {serial_number}", icon="question")
+        if confirm_print:
+            print("Printing label for:", serial_number)
+            # Send to printer
+            self.printer.generate_label(serial_number)
+        else:
+            print("CANCELLED printing label for:", serial_number)
+
     def browser_button_change(self, value):
         browser = value
         if browser == "Edge":
@@ -826,7 +854,7 @@ class MenuFrame(customTk.CTkFrame):
         self.browser_buttons.grid(row=0, column=5, padx=(0,20), pady=5)
 
 class DeleteButtonsFrame(customTk.CTkFrame):
-    def __init__(self, master, delete_history_callback, delete_selected_callback, reset_button_callback, **kwargs):
+    def __init__(self, master, delete_history_callback, delete_selected_callback, reset_button_callback, print_label_callback, **kwargs):
         super().__init__(master, **kwargs)
 
         self.grid_rowconfigure(0, weight=0)
@@ -843,7 +871,7 @@ class DeleteButtonsFrame(customTk.CTkFrame):
                                                fg_color="#deb10d",
                                                hover_color="#f0c93e",
                                                text_color="black")
-        self.temp_button = customTk.CTkButton(self, text="TEMP BUTTON", border_color="#55565a", border_width=2, fg_color="transparent", hover_color=("#CCCCCC","#474747"))
+        self.temp_button = customTk.CTkButton(self, text="Print Label", border_color="#55565a", border_width=2, fg_color="transparent", hover_color=("#CCCCCC","#474747"), command=print_label_callback)
         #self.temp_button2 = customTk.CTkButton(self, text="Temp", border_color="#55565a", border_width=2, fg_color="transparent", hover_color="#474747")
         self.fun_bar = customTk.CTkProgressBar(master=self, mode="indeterminate", progress_color="#fdb916", indeterminate_speed=.3, width=30, corner_radius=12)
 
