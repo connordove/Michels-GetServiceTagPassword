@@ -1,0 +1,17 @@
+pyinstaller --onefile --windowed ^
+  --icon="Unlock_2_HighRes.ico" ^
+  --name="Michels - Get LAPS History" ^
+  --collect-data customtkinter ^
+  --add-data "michels_theme.json;." ^
+  --add-data "Unlock_2_HighRes.ico;." ^
+  --add-data "Michels Logo We Do That And More Two Lines.png;." ^
+  --add-data "Michels Logo We Do That And More Two Lines White.png;." ^
+  --add-data "djCat.gif;." ^
+  --add-data "HappyCat.gif;." ^
+  --add-data "JackHammer.gif;." ^
+  --add-data "Property of BLANK.png;." ^
+  --add-binary "msedgedriver.exe;." ^
+  --add-binary "chromedriver.exe;." ^
+  --hidden-import "win32ui" ^
+  --hidden-import "win32print" ^
+  get_LAPS_updated_GUI_SLEEK.py
