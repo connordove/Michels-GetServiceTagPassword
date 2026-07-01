@@ -25,7 +25,7 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-theme_path = resource_path(r"newGUI/michels_theme.json")
+theme_path = resource_path(r"newGUI\michels_theme.json")
 
 print("THEME PATH:", theme_path)
 print("EXISTS:", os.path.exists(theme_path))

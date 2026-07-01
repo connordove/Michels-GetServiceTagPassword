@@ -1,4 +1,5 @@
 import requests
+import certifi
 import os
 import subprocess
 import shutil
@@ -31,7 +32,7 @@ def sha256(file_path):
 
 def get_latest_release():
     url = f"https://api.github.com/repos/{REPO}/releases/latest"
-    r = requests.get(url, timeout=10)
+    r = requests.get(url, timeout=10, verify=get_cert_path())
 
     if r.status_code != 200:
         raise Exception("GitHub API error")
@@ -51,7 +52,7 @@ def get_latest_release():
     return version, exe_url, hash_url
 
 def download_file(url, path):
-    r = requests.get(url, stream=True, timeout=30)
+    r = requests.get(url, stream=True, timeout=30, verify=get_cert_path())
     with open(path, "wb") as f:
         for chunk in r.iter_content(8192):
             f.write(chunk)
@@ -105,6 +106,15 @@ def run_app():
     except Exception as e:
         print(f"Error: {e}")
         rollback()
+
+
+def get_cert_path():
+    if getattr(sys, 'frozen', False):
+        # Running inside PyInstaller bundle
+        return os.path.join(sys._MEIPASS, 'cacert.pem')
+    else:
+        return certifi.wher
+
 
 def main():
     try:
