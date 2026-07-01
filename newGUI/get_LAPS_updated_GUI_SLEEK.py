@@ -21,11 +21,11 @@ def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
     except AttributeError:
-        base_path = os.path.abspath(".")
+        base_path = os.path.dirname(os.path.abspath(__file__))
 
     return os.path.join(base_path, relative_path)
 
-theme_path = resource_path(r"newGUI\michels_theme.json")
+theme_path = resource_path("michels_theme.json")
 
 print("THEME PATH:", theme_path)
 print("EXISTS:", os.path.exists(theme_path))
@@ -40,7 +40,7 @@ class App(customTk.CTk):
         self.title("My GUI")
         self.desktop = os.path.join(os.environ["LOCALAPPDATA"])
         self.file_path = os.path.join(self.desktop, "LAPSHistory.txt")
-        self.icon_path = (resource_path('newGUI/Unlock_2_HighRes.ico'))
+        self.icon_path = (resource_path('Unlock_2_HighRes.ico'))
         self.settings_path = os.path.join(
             os.environ["LOCALAPPDATA"],
             "LAPSSettings.json"
@@ -130,8 +130,8 @@ class App(customTk.CTk):
         # --- Entry ---
 
         # --- Image ---
-        self.image_file = customtkinter.CTkImage(light_image=Image.open(resource_path("newGUI/Michels Logo We Do That And More Two Lines.png")),
-                                            dark_image=Image.open(resource_path("newGUI/Michels Logo We Do That And More Two Lines White.png")),
+        self.image_file = customtkinter.CTkImage(light_image=Image.open(resource_path("Michels Logo We Do That And More Two Lines.png")),
+                                            dark_image=Image.open(resource_path("Michels Logo We Do That And More Two Lines White.png")),
                                             size=(600, 100))
         self.michels_label = customTk.CTkLabel(self, text="", image=self.image_file)
         self.m_click_count = 0
@@ -139,9 +139,9 @@ class App(customTk.CTk):
 
 
         # --- GIF ---
-        self.gif1 = CTkGif(self, resource_path("newGUI/djCat.gif"), size=(800,500))
-        self.gif2 = CTkGif(self, resource_path("newGUI/HappyCat.gif"), size=(100, 100))
-        self.gif3 = CTkGif(self, resource_path("newGUI/JackHammer.gif"), size=(100, 100))
+        self.gif1 = CTkGif(self, resource_path("djCat.gif"), size=(800,500))
+        self.gif2 = CTkGif(self, resource_path("HappyCat.gif"), size=(100, 100))
+        self.gif3 = CTkGif(self, resource_path("JackHammer.gif"), size=(100, 100))
 
         #region Layout
         # --- Layout ---
@@ -427,7 +427,7 @@ class App(customTk.CTk):
         driver = None
         try:
             if self.menu_frame.browser_buttons.get() == "Edge":
-                driver_path = resource_path("newGUI/msedgedriver.exe")
+                driver_path = resource_path("msedgedriver.exe")
                 service = Service(driver_path)
                 try:
                     driver = webdriver.Edge(service=service)
@@ -436,7 +436,7 @@ class App(customTk.CTk):
                     return
                 print("Edge started")
             elif self.menu_frame.browser_buttons.get() == "Chrome":
-                driver_path = resource_path("newGUI/chromedriver.exe")
+                driver_path = resource_path("chromedriver.exe")
                 service = Service(driver_path)
                 try:
                     driver = webdriver.Chrome(service=service)

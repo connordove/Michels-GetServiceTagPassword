@@ -10,9 +10,12 @@ def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
     except AttributeError:
-        base_path = os.path.abspath("..")
+        base_path = os.path.dirname(os.path.abspath(__file__))
 
     return os.path.join(base_path, relative_path)
+
+
+_TEMPLATE = resource_path("Property of BLANK.png")
 
 
 class LabelPrinter:
@@ -21,18 +24,16 @@ class LabelPrinter:
         if not self.printer_name:
             raise Exception("Smart Label Printer 650 not found")
 
-        self.img = Image.open(resource_path("newGUI\\Property of BLANK.png"))
-
         self.width = 331
         self.height = 602
 
     def generate_label(self, data):
+        # Reload template fresh each call so repeated prints don't inherit
+        # a prior rotation or stale QR/text drawn on the previous label.
+        self.img = Image.open(_TEMPLATE)
         self._add_qr_to_label(data)
         self._add_label_text(data)
         self.img = self.img.rotate(90, expand=True)
-        #self.img.show()
-        self.img.save("label.pdf", "PDF")
-        #input("Press Enter to continue...")
         print(f"Printing to: {self.printer_name}")
         self._print_label()
 
